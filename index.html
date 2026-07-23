@@ -572,8 +572,6 @@
             flex: 1;
             margin-left: 260px;
             padding: 30px;
-            overflow-y: auto;
-            max-height: 100vh;
         }
 
         .section {
@@ -642,8 +640,6 @@
             .main-content {
                 margin-left: 0;
                 padding: 80px 15px 100px 15px; /* Espacio para header y botón flotante */
-                max-height: 100vh;
-                overflow-y: auto;
             }
 
             .header {
@@ -870,6 +866,39 @@
             .btn-cancel:hover {
                 background: #ecf0f1;
             }
+
+/* ✅ BLINDAJE: Asegurar que los modales siempre sean fixed y cubran toda la pantalla */
+.modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.modal-overlay:not(.hidden) {
+    display: flex !important;
+}
+
+.modal-box {
+    position: relative;
+    z-index: 10000;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease;
+}
 
     </style>
 </head>
@@ -1171,31 +1200,6 @@
                 </div>
             </section>
 
-            <!-- MODAL PARA AGREGAR PARTICIPANTE -->
-            <div id="modalParticipante" class="modal-overlay hidden">
-                <div class="modal-box">
-                    <div class="modal-header">
-                        <h3>➕ Agregar y Matricular Participante</h3>
-                        <button class="modal-close" onclick="cerrarModalParticipante()">✕</button>
-                    </div>
-                    <form id="formParticipante" onsubmit="event.preventDefault(); guardarParticipante();">
-                        <div class="form-grid">
-                            <div class="form-group"><label>Curso a Cursar *</label><select id="partCurso" required><option value="">Selecciona un curso...</option></select></div>
-                            <div class="form-group"><label>Nivel del Curso *</label><select id="partNivel" required><option value="">Selecciona el nivel...</option><option value="BASICO">Básico</option><option value="INTERMEDIO">Intermedio</option><option value="AVANZADO">Avanzado</option></select></div>
-                            <div class="form-group"><label>Cédula de Identidad *</label><input type="text" id="partCedula" placeholder="Ej: 12345678" required></div>
-                            <div class="form-group"><label>Nombre Completo *</label><input type="text" id="partNombre" placeholder="Nombre y Apellido" required></div>
-                            <div class="form-group"><label>Edad *</label><input type="number" id="partEdad" min="15" max="99" placeholder="Ej: 25" required></div>
-                            <div class="form-group"><label>Teléfono *</label><input type="tel" id="partTelefono" placeholder="Ej: 0412-1234567" required></div>
-                            <div class="form-group" style="grid-column: 1 / -1;"><label>Correo Electrónico *</label><input type="email" id="partCorreo" placeholder="correo@ejemplo.com" required></div>
-                        </div>
-                        <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button type="button" class="btn-cancel" onclick="cerrarModalParticipante()">Cancelar</button>
-                            <button type="submit" class="btn-success" id="btnGuardarPart" style="flex: 1;">💾 Guardar y Matricular</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <!-- PAGO A PROFESORES (Solo Admin) -->
             <section id="pagosProfesores" class="section admin-only hidden">
                 <div class="section-header">
@@ -1335,6 +1339,31 @@
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
                             <button type="button" class="btn-cancel" onclick="cerrarModalPagoProfesor()">Cancelar</button>
                             <button type="submit" class="btn-success" style="flex: 1;">💾 Registrar Pago</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- MODAL PARA AGREGAR PARTICIPANTE -->
+            <div id="modalParticipante" class="modal-overlay hidden">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3>➕ Agregar y Matricular Participante</h3>
+                        <button class="modal-close" onclick="cerrarModalParticipante()">✕</button>
+                    </div>
+                    <form id="formParticipante" onsubmit="event.preventDefault(); guardarParticipante();">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Curso a Cursar *</label><select id="partCurso" required><option value="">Selecciona un curso...</option></select></div>
+                            <div class="form-group"><label>Nivel del Curso *</label><select id="partNivel" required><option value="">Selecciona el nivel...</option><option value="BASICO">Básico</option><option value="INTERMEDIO">Intermedio</option><option value="AVANZADO">Avanzado</option></select></div>
+                            <div class="form-group"><label>Cédula de Identidad *</label><input type="text" id="partCedula" placeholder="Ej: 12345678" required></div>
+                            <div class="form-group"><label>Nombre Completo *</label><input type="text" id="partNombre" placeholder="Nombre y Apellido" required></div>
+                            <div class="form-group"><label>Edad *</label><input type="number" id="partEdad" min="15" max="99" placeholder="Ej: 25" required></div>
+                            <div class="form-group"><label>Teléfono *</label><input type="tel" id="partTelefono" placeholder="Ej: 0412-1234567" required></div>
+                            <div class="form-group" style="grid-column: 1 / -1;"><label>Correo Electrónico *</label><input type="email" id="partCorreo" placeholder="correo@ejemplo.com" required></div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="button" class="btn-cancel" onclick="cerrarModalParticipante()">Cancelar</button>
+                            <button type="submit" class="btn-success" id="btnGuardarPart" style="flex: 1;">💾 Guardar y Matricular</button>
                         </div>
                     </form>
                 </div>
