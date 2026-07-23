@@ -638,6 +638,7 @@
             }
 
             .main-content {
+                flex: 1;
                 margin-left: 0;
                 padding: 80px 15px 100px 15px; /* Espacio para header y botón flotante */
             }
@@ -671,8 +672,12 @@
             }
 
             .section {
-                padding: 15px;
-                margin-bottom: 15px;
+                background: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                margin-bottom: 20px;
+                display: none;
             }
 
             .section-header {
@@ -867,38 +872,51 @@
                 background: #ecf0f1;
             }
 
-/* ✅ BLINDAJE: Asegurar que los modales siempre sean fixed y cubran toda la pantalla */
-.modal-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 9999 !important;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-}
+            /* ✅ BLINDAJE: Asegurar que los modales siempre sean fixed y cubran toda la pantalla */
+            .modal-overlay {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                z-index: 9999 !important;
+                display: none;
+                justify-content: center;
+                align-items: center;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(4px);
+            }
 
-.modal-overlay:not(.hidden) {
-    display: flex !important;
-}
+            .modal-overlay:not(.hidden) {
+                display: flex !important;
+            }
 
-.modal-box {
-    position: relative;
-    z-index: 10000;
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    animation: slideIn 0.3s ease;
-}
+            .modal-box {
+                position: relative;
+                z-index: 10000;
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                width: 90%;
+                max-width: 600px;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease;
+            }
+
+            /* ✅ BLINDAJE FINAL: Modales siempre fixed sobre toda la pantalla */
+            .modal-overlay {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                z-index: 9999 !important;
+            }
+            .modal-overlay:not(.hidden) {
+                display: flex !important;
+            }
 
     </style>
 </head>
