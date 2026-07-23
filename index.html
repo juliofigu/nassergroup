@@ -952,30 +952,6 @@
                 </div>
             </section>
 
-            <!-- MODAL PARA REGISTRAR PAGO -->
-            <div id="modalPago" class="modal-overlay hidden">
-                <div class="modal-box">
-                    <div class="modal-header">
-                        <h3>💰 Registrar Nuevo Pago</h3>
-                        <button class="modal-close" onclick="cerrarModalPago()">✕</button>
-                    </div>
-                    <form id="formPago" onsubmit="event.preventDefault(); guardarPago();">
-                        <div class="form-grid">
-                            <div class="form-group"><label>Participante *</label><select id="pagoParticipante" required><option value="">Selecciona un participante...</option></select></div>
-                            <div class="form-group"><label>Fecha del Pago *</label><input type="date" id="pagoFecha" required></div>
-                            <div class="form-group"><label>Monto (USD) *</label><input type="number" id="pagoMonto" step="0.01" min="0.01" placeholder="Ej: 50.00" required></div>
-                            <div class="form-group"><label>Número de Abono *</label><select id="pagoAbonoNum" required><option value="1">Abono 1</option><option value="2">Abono 2</option><option value="3">Abono 3</option></select></div>
-                            <div class="form-group"><label>No. de Referencia *</label><input type="text" id="pagoReferencia" placeholder="Ej: 12345678" required></div>
-                            <div class="form-group"><label>Banco *</label><select id="pagoBanco" required><option value="">Selecciona un banco...</option><option value="Venezuela">Venezuela</option><option value="Banesco">Banesco</option><option value="Mercantil">Mercantil</option><option value="Provincial">Provincial</option><option value="BNC">BNC</option><option value="Bicentenario">Bicentenario</option><option value="Del Tesoro">Del Tesoro</option><option value="Efectivo">Efectivo</option><option value="ZELLE">ZELLE</option><option value="Otro">Otro</option></select></div>
-                        </div>
-                        <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button type="button" class="btn-cancel" onclick="cerrarModalPago()">Cancelar</button>
-                            <button type="submit" class="btn-success" id="btnGuardarPago" style="flex: 1;">💾 Registrar Pago</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <!-- REGISTRO DE HORAS -->
             <section id="horas" class="section">
                 <div class="section-header">
@@ -1108,53 +1084,6 @@
                 </div>
             </section>
 
-            <!-- MODAL PARA AGREGAR NOTA INDIVIDUAL -->
-            <div id="modalAgregarNota" class="modal-overlay hidden">
-                <div class="modal-box">
-                    <div class="modal-header">
-                        <h3>➕ Agregar Evaluación Diaria</h3>
-                        <button class="modal-close" onclick="cerrarModalAgregarNota()">✕</button>
-                    </div>
-                    <form id="formAgregarNota" onsubmit="event.preventDefault(); guardarNotaIndividual();">
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <p style="margin: 0;"><strong>Participante:</strong> <span id="notaNombre">-</span></p>
-                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #7f8c8d;">C.I.: <span id="notaCedula">-</span></p>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Materia Evaluada *</label>
-                                <select id="notaMateria" required>
-                                    <option value="Teoria (Seguridad)">Teoría (Seguridad)</option>
-                                    <option value="Teoria">Teoría (Ciencia de Materiales)</option>
-                                    <option value="Practica">Práctica</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Nota Obtenida (0-20) *</label>
-                                <input type="number" id="notaValor" step="0.1" min="0" max="20" placeholder="Ej: 18.5" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Fecha de Evaluación *</label>
-                                <input type="date" id="notaFecha" required>
-                            </div>
-                            <div class="form-group" style="grid-column: 1 / -1;">
-                                <label>Observación (Opcional)</label>
-                                <input type="text" id="notaObservacion" placeholder="Ej: Excelente participación, Quiz #3, etc.">
-                            </div>
-                        </div>
-                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <p style="margin: 0; font-size: 14px; color: #1976d2;">
-                                <strong>ℹ️ Nota:</strong> El sistema promediará automáticamente todas las notas ingresadas para esta materia y aplicará la ponderación configurada.
-                            </p>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button type="button" class="btn-cancel" onclick="cerrarModalAgregarNota()">Cancelar</button>
-                            <button type="submit" class="btn-success" id="btnGuardarNota" style="flex: 1;">💾 Guardar Nota</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <!-- MODAL PARA AGREGAR PARTICIPANTE -->
             <div id="modalParticipante" class="modal-overlay hidden">
                 <div class="modal-box">
@@ -1205,6 +1134,82 @@
                     </div>
                 </div>
             </section>
+        </main>
+    </div>
+
+            <!-- ==========================================
+                    MODALES (FUERA DEL MAIN CONTENT)
+                ========================================== -->
+            <!-- MODAL PARA REGISTRAR PAGO -->
+            <div id="modalPago" class="modal-overlay hidden">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3>💰 Registrar Nuevo Pago</h3>
+                        <button class="modal-close" onclick="cerrarModalPago()">✕</button>
+                    </div>
+                    <form id="formPago" onsubmit="event.preventDefault(); guardarPago();">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Participante *</label><select id="pagoParticipante" required><option value="">Selecciona un participante...</option></select></div>
+                            <div class="form-group"><label>Fecha del Pago *</label><input type="date" id="pagoFecha" required></div>
+                            <div class="form-group"><label>Monto (USD) *</label><input type="number" id="pagoMonto" step="0.01" min="0.01" placeholder="Ej: 50.00" required></div>
+                            <div class="form-group"><label>Número de Abono *</label><select id="pagoAbonoNum" required><option value="1">Abono 1</option><option value="2">Abono 2</option><option value="3">Abono 3</option></select></div>
+                            <div class="form-group"><label>No. de Referencia *</label><input type="text" id="pagoReferencia" placeholder="Ej: 12345678" required></div>
+                            <div class="form-group"><label>Banco *</label><select id="pagoBanco" required><option value="">Selecciona un banco...</option><option value="Venezuela">Venezuela</option><option value="Banesco">Banesco</option><option value="Mercantil">Mercantil</option><option value="Provincial">Provincial</option><option value="BNC">BNC</option><option value="Bicentenario">Bicentenario</option><option value="Del Tesoro">Del Tesoro</option><option value="Efectivo">Efectivo</option><option value="ZELLE">ZELLE</option><option value="Otro">Otro</option></select></div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="button" class="btn-cancel" onclick="cerrarModalPago()">Cancelar</button>
+                            <button type="submit" class="btn-success" id="btnGuardarPago" style="flex: 1;">💾 Registrar Pago</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- MODAL PARA AGREGAR NOTA INDIVIDUAL -->
+            <div id="modalAgregarNota" class="modal-overlay hidden">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3>➕ Agregar Evaluación Diaria</h3>
+                        <button class="modal-close" onclick="cerrarModalAgregarNota()">✕</button>
+                    </div>
+                    <form id="formAgregarNota" onsubmit="event.preventDefault(); guardarNotaIndividual();">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0;"><strong>Participante:</strong> <span id="notaNombre">-</span></p>
+                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #7f8c8d;">C.I.: <span id="notaCedula">-</span></p>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Materia Evaluada *</label>
+                                <select id="notaMateria" required>
+                                    <option value="Teoria (Seguridad)">Teoría (Seguridad)</option>
+                                    <option value="Teoria">Teoría (Ciencia de Materiales)</option>
+                                    <option value="Practica">Práctica</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nota Obtenida (0-20) *</label>
+                                <input type="number" id="notaValor" step="0.1" min="0" max="20" placeholder="Ej: 18.5" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha de Evaluación *</label>
+                                <input type="date" id="notaFecha" required>
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>Observación (Opcional)</label>
+                                <input type="text" id="notaObservacion" placeholder="Ej: Excelente participación, Quiz #3, etc.">
+                            </div>
+                        </div>
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0; font-size: 14px; color: #1976d2;">
+                                <strong>ℹ️ Nota:</strong> El sistema promediará automáticamente todas las notas ingresadas para esta materia y aplicará la ponderación configurada.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" class="btn-cancel" onclick="cerrarModalAgregarNota()">Cancelar</button>
+                            <button type="submit" class="btn-success" id="btnGuardarNota" style="flex: 1;">💾 Guardar Nota</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <!-- MODAL PARA PAGAR A PROFESOR -->
             <div id="modalPagoProfesor" class="modal-overlay hidden">
@@ -1247,9 +1252,6 @@
                     </form>
                 </div>
             </div>
-
-        </main>
-    </div>
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbz9ZvqMX9yI0GQDebm-i8ekRMFQdnVcKnkhiAzbPbhmZ_PSXabdKqNx-5gQa6aD67EZuQ/exec';
