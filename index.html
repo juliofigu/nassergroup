@@ -859,6 +859,170 @@
                 from { transform: translateY(-20px); opacity: 0; }
                 to { transform: translateY(0); opacity: 1; }
             }
+
+/* ==========================================
+MEJORA VISUAL DE BOTONES Y BADGES
+========================================== */
+
+/* Badges de estado mejorados */
+.badge-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+    color: white !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3) !important;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #f39c12, #f1c40f) !important;
+    color: white !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3) !important;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    color: white !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3) !important;
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    color: white !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3) !important;
+}
+
+/* Botones de acción mejorados */
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12, #f1c40f) !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 3px 10px rgba(243, 156, 18, 0.3) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4) !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 3px 10px rgba(231, 76, 60, 0.3) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4) !important;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 3px 10px rgba(39, 174, 96, 0.3) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4) !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Badge de saldo pendiente mejorado */
+.badge-saldo {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    color: white !important;
+    padding: 8px 14px !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    box-shadow: 0 3px 10px rgba(231, 76, 60, 0.3) !important;
+    display: inline-block !important;
+    margin-bottom: 5px !important;
+}
+
+/* Contenedor de botones de acción */
+.acciones-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+/* Información de saldo más clara */
+.saldo-info {
+    font-size: 11px !important;
+    color: #7f8c8d !important;
+    margin-top: 5px !important;
+    line-height: 1.4 !important;
+}
+
+.saldo-info strong {
+    color: #2c3e50 !important;
+    font-weight: 600 !important;
+}
+
     </style>
 </head>
 <body>
@@ -1415,7 +1579,25 @@ async function cargarParticipantes(cursoId) {
             contenedorTabla.classList.remove('hidden');
             
             // 4. Dibujar cada fila
-            data.participantes.forEach(p => {
+            data.participantes.forEach(p => {});
+        }
+    } catch (error) {
+        console.error('❌ Error al cargar participantes:', error);
+        alert('Error al cargar participantes: ' + error.message);
+    }
+}
+
+        function abrirModalParticipante() {
+            if (!cursoActual) { alert('⚠️ Primero selecciona un curso.'); return; }
+            const selectCurso = document.getElementById('partCurso');
+            selectCurso.innerHTML = '<option value="">Selecciona un curso...</option>';
+            cursosDisponibles.forEach(curso => {
+                const option = document.createElement('option');
+                option.value = curso.id;
+                option.dataset.nivel = curso.nivel;
+                option.textContent = curso.nombre;
+                selectCurso.appendChild(option);
+           
                 // ✅ CORRECCIÓN 1: Usar los campos correctos del servidor
                 const tieneNotas = p.valorCurso > 0;
                 const saldoPendiente = p.valorCurso - p.totalPagado;
@@ -1447,51 +1629,33 @@ async function cargarParticipantes(cursoId) {
                     saldoTexto = 'Sobrepagó';
                 }
                 
-                // ✅ CORRECCIÓN 2: Usar los campos correctos en el HTML
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${p.cedula}</td>
-                        <td>${p.nombre}</td>
-                        <td>${p.edad}</td>
-                        <td>${p.correo}</td>
-                        <td>${p.telefono}</td>
-                        <td><span class="badge ${estadoBadgeClass}">${p.estado}</span></td>
-                        <td style="text-align: center;">
-                            <span class="badge ${saldoBadgeClass}" style="font-size: 12px; padding: 5px 10px;">
-                                ${saldoTexto}
-                            </span>
-                            <div style="font-size: 11px; color: #7f8c8d; margin-top: 3px;">
-                                Valor: $${p.valorCurso} | Pagado: $${p.totalPagado.toFixed(2)}
-                            </div>
-                        </td>
-                        <td>
-                            <button class="${btnClass}" onclick="cambiarEstadoParticipante('${p.id}', '${p.nombre}', '${p.estado}')" style="margin-right: 5px; padding: 5px 10px; font-size: 11px;">
-                                🔄 ${btnTexto}
-                            </button>
-                            <button class="btn-danger" onclick="eliminarParticipante('${p.id}', '${p.nombre}')" style="padding: 5px 10px; font-size: 11px;">
-                                🗑️ Eliminar
-                            </button>
-                        </td>
-                    </tr>`;
-            });
-        }
-    } catch (error) {
-        console.error('❌ Error al cargar participantes:', error);
-        alert('Error al cargar participantes: ' + error.message);
-    }
-}
-
-        function abrirModalParticipante() {
-            if (!cursoActual) { alert('⚠️ Primero selecciona un curso.'); return; }
-            const selectCurso = document.getElementById('partCurso');
-            selectCurso.innerHTML = '<option value="">Selecciona un curso...</option>';
-            cursosDisponibles.forEach(curso => {
-                const option = document.createElement('option');
-                option.value = curso.id;
-                option.dataset.nivel = curso.nivel;
-                option.textContent = curso.nombre;
-                selectCurso.appendChild(option);
-            });
+        // ✅ CORRECCIÓN 2: Usar los campos correctos en el HTML (MEJORADO VISUALMENTE)
+        tbody.innerHTML += `
+        <tr>
+            <td style="font-weight: 600; color: #2c3e50;">${p.cedula}</td>
+            <td>${p.nombre}</td>
+            <td>${p.edad}</td>
+            <td>${p.correo}</td>
+            <td>${p.telefono}</td>
+            <td><span class="badge ${estadoBadgeClass}">${p.estado}</span></td>
+            <td style="text-align: center;">
+                <span class="badge-saldo">${saldoTexto}</span>
+                <div class="saldo-info">
+                    Valor: <strong>$${p.valorCurso}</strong> | Pagado: <strong>$${p.totalPagado.toFixed(2)}</strong>
+                </div>
+            </td>
+            <td>
+                <div class="acciones-container">
+                    <button class="${btnClass}" onclick="cambiarEstadoParticipante('${p.id}', '${p.nombre}', '${p.estado}')" style="padding: 8px 16px; font-size: 12px;">
+                        🔄 ${btnTexto}
+                    </button>
+                    <button class="btn-danger" onclick="eliminarParticipante('${p.id}', '${p.nombre}')" style="padding: 8px 16px; font-size: 12px;">
+                        🗑️ Eliminar
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+             });
             if (cursoActual) {
                 selectCurso.value = cursoActual;
                 const cursoObj = cursosDisponibles.find(c => c.id === cursoActual);
