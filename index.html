@@ -361,6 +361,13 @@
         .badge-warning { background: #fff3cd; color: #856404; }        
         .badge-danger { background: #f8d7da; color: #721c24; } /* ← AGREGAR ESTA LÍNEA */
 
+        #resumenAsistenciaCard {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
 
         /* Forms */
         .form-grid {
@@ -2222,25 +2229,26 @@ function actualizarVistaAdmin() {
                 const responsePart = await fetch(`${API_URL}?action=getParticipantes&cursoId=${encodeURIComponent(cursoActual)}`);
                 const partData = await responsePart.json();
                 
-                // 2. Obtener resumen de asistencia del backend
+                // 2. Obtener TODAS las clases del curso (para calcular el total correcto)
+                const responseHoras = await fetch(`${API_URL}?action=getHistorialHoras&cursoId=${encodeURIComponent(cursoActual)}`);
+                const horasData = await responseHoras.json();
+                const totalClasesCurso = horasData.historial ? horasData.historial.length : 0;
+                
+                // 3. Obtener resumen de asistencia del backend
                 let asistenciaData = {};
-                let totalClases = 0;
                 
                 try {
                     const responseAsis = await fetch(`${API_URL}?action=getResumenAsistencia&cursoId=${encodeURIComponent(cursoActual)}`);
                     const dataAsis = await responseAsis.json();
-                    console.log("✅ Datos de asistencia recibidos:", dataAsis);
-                    
                     if (dataAsis.exito) {
                         asistenciaData = dataAsis.resumen || {};
-                        totalClases = dataAsis.totalClases || 0;
                     }
                 } catch (e) {
                     console.warn("⚠️ No se pudo obtener el resumen de asistencia:", e);
                 }
 
-                // 3. Actualizar el resumen superior
-                document.getElementById('totalClasesAsistencia').textContent = totalClases;
+                // Actualizar el resumen superior
+                document.getElementById('totalClasesAsistencia').textContent = totalClasesCurso;
                 document.getElementById('totalParticipantesAsistencia').textContent = partData.participantes ? partData.participantes.length : 0;
                 
                 tbody.innerHTML = '';
@@ -2253,16 +2261,21 @@ function actualizarVistaAdmin() {
                 let sumaPorcentajes = 0;
                 let participantesConDatos = 0;
 
-                // 4. Crear fila por cada participante con su porcentaje
+                // Crear fila por cada participante con su porcentaje
                 partData.participantes.forEach((p, index) => {
                     const row = document.createElement('tr');
                     row.setAttribute('data-cedula', p.cedula);
                     
-                    // Calcular porcentaje de asistencia
+                    // Calcular porcentaje CORRECTO
                     let porcentaje = 0;
-                    if (totalClases > 0 && asistenciaData[p.cedula]) {
-                        porcentaje = Math.round((asistenciaData[p.cedula].asistencias / totalClases) * 100);
+                    if (totalClasesCurso > 0 && asistenciaData[p.cedula]) {
+                        // Evitar que supere 100%
+                        const asistencias = Math.min(asistenciaData[p.cedula].asistencias, totalClasesCurso);
+                        porcentaje = Math.round((asistencias / totalClasesCurso) * 100);
                     }
+                    
+                    // Limitar a 100% máximo
+                    porcentaje = Math.min(porcentaje, 100);
                     
                     sumaPorcentajes += porcentaje;
                     participantesConDatos++;
@@ -2302,11 +2315,9 @@ function actualizarVistaAdmin() {
                     tbody.appendChild(row);
                 });
                 
-                // 5. Actualizar promedio general del curso
+                // Actualizar promedio general del curso
                 const promedioGeneral = participantesConDatos > 0 ? Math.round(sumaPorcentajes / participantesConDatos) : 0;
                 document.getElementById('promedioAsistenciaCurso').textContent = promedioGeneral + '%';
-                
-                console.log(`✅ Total participantes: ${partData.participantes.length}, Promedio curso: ${promedioGeneral}%`);
                 
             } catch (error) {
                 console.error('❌ Error cargando lista de asistencia:', error);
