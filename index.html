@@ -358,7 +358,9 @@
         }
 
         .badge-success { background: #d4edda; color: #155724; }
-        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-warning { background: #fff3cd; color: #856404; }        
+        .badge-danger { background: #f8d7da; color: #721c24; } /* ← AGREGAR ESTA LÍNEA */
+
 
         /* Forms */
         .form-grid {
@@ -1073,6 +1075,26 @@
             <!-- ASISTENCIA -->
             <section id="asistencia" class="section">
                 <div class="section-header"><h3 class="section-title">📋 Control de Asistencia</h3></div>
+                
+                <!-- NUEVO: Resumen de Asistencia del Curso -->
+                <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <h4 style="margin-bottom: 15px; color: white;">📊 Resumen de Asistencia del Curso</h4>
+                    <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; text-align: center;">
+                        <div>
+                            <div style="font-size: 32px; font-weight: bold;" id="totalClasesAsistencia">0</div>
+                            <div style="font-size: 14px; opacity: 0.9;">Clases Registradas</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 32px; font-weight: bold;" id="promedioAsistenciaCurso">0%</div>
+                            <div style="font-size: 14px; opacity: 0.9;">Promedio General</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 32px; font-weight: bold;" id="totalParticipantesAsistencia">0</div>
+                            <div style="font-size: 14px; opacity: 0.9;">Participantes Activos</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card" style="margin-bottom: 20px;">
                     <h4 style="margin-bottom: 15px; color: #2c3e50;">1. Selecciona la clase a evaluar</h4>
                     <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
@@ -1090,7 +1112,16 @@
                     </div>
                     <div class="table-container" id="contenedorTablaAsistencia" style="display: none;">
                         <table>
-                            <thead><tr><th>C.I.</th><th>Nombre</th><th style="text-align: center;">Estado</th><th>Observación (Opcional)</th></tr></thead>
+                            <!-- NUEVO: Columna de % Asistencia agregada -->
+                            <thead>
+                                <tr>
+                                    <th>C.I.</th>
+                                    <th>Nombre</th>
+                                    <th style="text-align: center;">% Asistencia</th>
+                                    <th style="text-align: center;">Estado Hoy</th>
+                                    <th>Observación (Opcional)</th>
+                                </tr>
+                            </thead>
                             <tbody id="tablaAsistencia"></tbody>
                         </table>
                         <div style="margin-top: 20px; text-align: right;">
@@ -1098,7 +1129,7 @@
                         </div>
                     </div>
                 </div>
-            </section>           
+            </section>        
 
             <!-- CALIFICACIONES -->
             <section id="notas" class="section">
@@ -2167,7 +2198,7 @@ function actualizarVistaAdmin() {
         }
 
         async function cargarListaAsistencia() {
-            console.log("🔄 Cargando lista de asistencia...");
+            console.log("🔄 Cargando lista de asistencia con estadísticas...");
             
             const select = document.getElementById('selectClaseAsistencia');
             const contenedor = document.getElementById('contenedorTablaAsistencia');
@@ -2175,7 +2206,6 @@ function actualizarVistaAdmin() {
             const tbody = document.getElementById('tablaAsistencia');
             
             if (!select.value) {
-                console.warn("️ No hay clase seleccionada");
                 contenedor.style.display = 'none';
                 mensaje.classList.remove('hidden');
                 return;
@@ -2183,41 +2213,80 @@ function actualizarVistaAdmin() {
             
             mensaje.classList.add('hidden');
             contenedor.style.display = 'block';
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">⏳ Cargando participantes...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">⏳ Cargando participantes y estadísticas...</td></tr>';
             
             try {
-                // ✅ CORRECCIÓN: Usar fetch directo a la API en lugar de getParticipantes
-                console.log(" Obteniendo participantes del curso:", cursoActual);
-                const response = await fetch(`${API_URL}?action=getParticipantes&cursoId=${encodeURIComponent(cursoActual)}`);
-                const partData = await response.json();
+                // 1. Obtener participantes del curso
+                const responsePart = await fetch(`${API_URL}?action=getParticipantes&cursoId=${encodeURIComponent(cursoActual)}`);
+                const partData = await responsePart.json();
                 
-                console.log("✅ Participantes recibidos:", partData);
+                // 2. Obtener resumen de asistencia del backend
+                let asistenciaData = {};
+                let totalClases = 0;
+                
+                try {
+                    const responseAsis = await fetch(`${API_URL}?action=getResumenAsistencia&cursoId=${encodeURIComponent(cursoActual)}`);
+                    const dataAsis = await responseAsis.json();
+                    if (dataAsis.exito || dataAsis.resumen) {
+                        asistenciaData = dataAsis.resumen || {};
+                        totalClases = dataAsis.totalClases || 0;
+                    }
+                } catch (e) {
+                    console.warn("⚠️ No se pudo obtener el resumen de asistencia. Se mostrará 0%");
+                }
+
+                // Actualizar el resumen superior
+                document.getElementById('totalClasesAsistencia').textContent = totalClases;
+                document.getElementById('totalParticipantesAsistencia').textContent = partData.participantes ? partData.participantes.length : 0;
                 
                 tbody.innerHTML = '';
                 
                 if (!partData.participantes || partData.participantes.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #e74c3c;">No hay participantes en este curso.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">No hay participantes en este curso.</td></tr>';
                     return;
                 }
                 
-                // Crear fila por cada participante
+                let sumaPorcentajes = 0;
+                let participantesConDatos = 0;
+
+                // Crear fila por cada participante con su porcentaje
                 partData.participantes.forEach((p, index) => {
-                    console.log(`  ✔️ Agregando participante ${index + 1}: ${p.nombre} (C.I.: ${p.cedula})`);
-                    
                     const row = document.createElement('tr');
                     row.setAttribute('data-cedula', p.cedula);
+                    
+                    // Calcular porcentaje
+                    let porcentaje = 0;
+                    if (totalClases > 0 && asistenciaData[p.cedula]) {
+                        porcentaje = Math.round((asistenciaData[p.cedula].asistencias / totalClases) * 100);
+                    }
+                    
+                    sumaPorcentajes += porcentaje;
+                    participantesConDatos++;
+                    
+                    // Determinar color del badge según el porcentaje
+                    let badgeClass = 'badge-danger'; // Rojo (< 60%)
+                    if (porcentaje >= 80) {
+                        badgeClass = 'badge-success'; // Verde (>= 80%)
+                    } else if (porcentaje >= 60) {
+                        badgeClass = 'badge-warning'; // Amarillo (60% - 79%)
+                    }
                     
                     row.innerHTML = `
                         <td>${p.cedula}</td>
                         <td>${p.nombre}</td>
                         <td style="text-align: center;">
-                            <label style="margin-right: 15px; cursor: pointer; color: #27ae60; font-weight: bold; display: inline-block;">
+                            <span class="badge ${badgeClass}" style="font-size: 14px; padding: 6px 12px; min-width: 60px; display: inline-block;">
+                                ${porcentaje}%
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <label style="margin-right: 10px; cursor: pointer; color: #27ae60; font-weight: bold; display: inline-flex; align-items: center;">
                                 <input type="radio" name="asis_${p.cedula}" value="Presente" checked style="margin-right: 5px;"> ✅
                             </label>
-                            <label style="margin-right: 15px; cursor: pointer; color: #e74c3c; font-weight: bold; display: inline-block;">
+                            <label style="margin-right: 10px; cursor: pointer; color: #e74c3c; font-weight: bold; display: inline-flex; align-items: center;">
                                 <input type="radio" name="asis_${p.cedula}" value="Ausente" style="margin-right: 5px;"> ❌
                             </label>
-                            <label style="cursor: pointer; color: #f39c12; font-weight: bold; display: inline-block;">
+                            <label style="cursor: pointer; color: #f39c12; font-weight: bold; display: inline-flex; align-items: center;">
                                 <input type="radio" name="asis_${p.cedula}" value="Justificado" style="margin-right: 5px;"> ⚠️
                             </label>
                         </td>
@@ -2226,15 +2295,16 @@ function actualizarVistaAdmin() {
                                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
                         </td>
                     `;
-                    
                     tbody.appendChild(row);
                 });
                 
-                console.log(`✅ Total de participantes cargados: ${partData.participantes.length}`);
+                // Actualizar promedio general del curso
+                const promedioGeneral = participantesConDatos > 0 ? Math.round(sumaPorcentajes / participantesConDatos) : 0;
+                document.getElementById('promedioAsistenciaCurso').textContent = promedioGeneral + '%';
                 
             } catch (error) {
                 console.error('❌ Error cargando lista de asistencia:', error);
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #e74c3c;">Error al cargar la lista. Revisa la consola.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error al cargar la lista. Revisa la consola.</td></tr>';
             }
         }
 
