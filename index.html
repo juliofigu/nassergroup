@@ -1076,9 +1076,9 @@
             <section id="asistencia" class="section">
                 <div class="section-header"><h3 class="section-title">📋 Control de Asistencia</h3></div>
                 
-                <!-- NUEVO: Resumen de Asistencia del Curso -->
-                <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
-                    <h4 style="margin-bottom: 15px; color: white;">📊 Resumen de Asistencia del Curso</h4>
+                <!-- RESUMEN DE ASISTENCIA DEL CURSO -->
+                <div id="resumenAsistenciaCard" class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <h4 style="margin-bottom: 15px; color: white;"> Resumen de Asistencia del Curso</h4>
                     <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; text-align: center;">
                         <div>
                             <div style="font-size: 32px; font-weight: bold;" id="totalClasesAsistencia">0</div>
@@ -1100,11 +1100,14 @@
                     <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
                         <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
                             <label>Clase Registrada</label>
-                            <select id="selectClaseAsistencia" onchange="cargarListaAsistencia()"><option value="">-- Selecciona una clase --</option></select>
+                            <select id="selectClaseAsistencia" onchange="cargarListaAsistencia()">
+                                <option value="">-- Selecciona una clase --</option>
+                            </select>
                         </div>
                         <button class="btn-primary" onclick="cargarListaAsistencia()" style="height: 46px;">🔄 Cargar Lista</button>
                     </div>
                 </div>
+                
                 <div class="card">
                     <h4 style="margin-bottom: 15px; color: #2c3e50;">2. Marca la asistencia de los participantes</h4>
                     <div id="mensajeSinClaseAsis" class="hidden" style="text-align: center; padding: 40px 20px; background: #f8f9fa; border-radius: 12px;">
@@ -1112,7 +1115,6 @@
                     </div>
                     <div class="table-container" id="contenedorTablaAsistencia" style="display: none;">
                         <table>
-                            <!-- NUEVO: Columna de % Asistencia agregada -->
                             <thead>
                                 <tr>
                                     <th>C.I.</th>
@@ -2227,15 +2229,17 @@ function actualizarVistaAdmin() {
                 try {
                     const responseAsis = await fetch(`${API_URL}?action=getResumenAsistencia&cursoId=${encodeURIComponent(cursoActual)}`);
                     const dataAsis = await responseAsis.json();
-                    if (dataAsis.exito || dataAsis.resumen) {
+                    console.log("✅ Datos de asistencia recibidos:", dataAsis);
+                    
+                    if (dataAsis.exito) {
                         asistenciaData = dataAsis.resumen || {};
                         totalClases = dataAsis.totalClases || 0;
                     }
                 } catch (e) {
-                    console.warn("⚠️ No se pudo obtener el resumen de asistencia. Se mostrará 0%");
+                    console.warn("⚠️ No se pudo obtener el resumen de asistencia:", e);
                 }
 
-                // Actualizar el resumen superior
+                // 3. Actualizar el resumen superior
                 document.getElementById('totalClasesAsistencia').textContent = totalClases;
                 document.getElementById('totalParticipantesAsistencia').textContent = partData.participantes ? partData.participantes.length : 0;
                 
@@ -2249,12 +2253,12 @@ function actualizarVistaAdmin() {
                 let sumaPorcentajes = 0;
                 let participantesConDatos = 0;
 
-                // Crear fila por cada participante con su porcentaje
+                // 4. Crear fila por cada participante con su porcentaje
                 partData.participantes.forEach((p, index) => {
                     const row = document.createElement('tr');
                     row.setAttribute('data-cedula', p.cedula);
                     
-                    // Calcular porcentaje
+                    // Calcular porcentaje de asistencia
                     let porcentaje = 0;
                     if (totalClases > 0 && asistenciaData[p.cedula]) {
                         porcentaje = Math.round((asistenciaData[p.cedula].asistencias / totalClases) * 100);
@@ -2292,19 +2296,21 @@ function actualizarVistaAdmin() {
                         </td>
                         <td>
                             <input type="text" class="obs-asis" data-cedula="${p.cedula}" placeholder="Ej: Llegó 15 min tarde" 
-                                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                                style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
                         </td>
                     `;
                     tbody.appendChild(row);
                 });
                 
-                // Actualizar promedio general del curso
+                // 5. Actualizar promedio general del curso
                 const promedioGeneral = participantesConDatos > 0 ? Math.round(sumaPorcentajes / participantesConDatos) : 0;
                 document.getElementById('promedioAsistenciaCurso').textContent = promedioGeneral + '%';
                 
+                console.log(`✅ Total participantes: ${partData.participantes.length}, Promedio curso: ${promedioGeneral}%`);
+                
             } catch (error) {
                 console.error('❌ Error cargando lista de asistencia:', error);
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error al cargar la lista. Revisa la consola.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error al cargar la lista. Revisa la consola (F12).</td></tr>';
             }
         }
 
