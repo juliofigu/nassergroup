@@ -1094,31 +1094,11 @@
                 </div>
             </section>
 
-            <!-- ASISTENCIA -->
-            <!-- ASISTENCIA -->
+           <!-- ASISTENCIA -->
             <section id="asistencia" class="section">
                 <div class="section-header"><h3 class="section-title">📋 Control de Asistencia</h3></div>
                 
-                <!-- NUEVO: TARJETA DE RESUMEN GLOBAL (Evita el error 'null') -->
-                <div class="card" style="margin-bottom: 25px; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
-                    <h4 style="margin-bottom: 15px; color: white;">📊 Resumen de Asistencia del Curso</h4>
-                    <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; text-align: center;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold;" id="totalClasesAsistencia">0</div>
-                            <div style="font-size: 14px; opacity: 0.9;">Clases Registradas</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold;" id="promedioAsistenciaCurso">0%</div>
-                            <div style="font-size: 14px; opacity: 0.9;">Promedio General</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold;" id="totalParticipantesAsistencia">0</div>
-                            <div style="font-size: 14px; opacity: 0.9;">Participantes Activos</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RESUMEN GLOBAL DE ASISTENCIA -->
+                <!-- RESUMEN GLOBAL DE ASISTENCIA (ÚNICA TARJETA) -->
                 <div id="resumenAsistenciaCard" class="card" style="margin-bottom: 25px; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
                     <h4 style="margin-bottom: 15px; color: white;">📊 Resumen Global de Asistencia</h4>
                     <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; text-align: center;">
@@ -2405,7 +2385,7 @@ function actualizarVistaAdmin() {
             
             mensaje.classList.add('hidden');
             contenedor.style.display = 'block';
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;"> Cargando participantes...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">⏳ Cargando participantes...</td></tr>';
             
             try {
                 // 1. Obtener participantes
@@ -2419,16 +2399,24 @@ function actualizarVistaAdmin() {
                     const dataAsis = await responseAsis.json();
                     if (dataAsis.exito && dataAsis.participantes) {
                         dataAsis.participantes.forEach(p => {
-                            asistenciaGlobal[p.cedula] = Math.min(p.promedioGlobal || 0, 100); // Tope 100%
+                            // Tope matemático al 100%
+                            asistenciaGlobal[p.cedula] = Math.min(p.promedioGlobal || 0, 100); 
                         });
                     }
                 } catch (e) { console.warn("No se pudo cargar resumen global", e); }
 
-                // SOLUCIÓN 3: Actualizar tarjeta de resumen superior (evita error null)
-                // Asumimos totalClases desde el backend o calculamos localmente si es necesario
-                // Por ahora mostramos 0 si no tenemos el dato específico de clases totales aquí
-                document.getElementById('totalClasesAsistencia').textContent = '-'; 
-                document.getElementById('totalParticipantesAsistencia').textContent = partData.participantes ? partData.participantes.length : 0;
+                // 3. Obtener total de clases reales del curso (para la tarjeta superior)
+                let totalClasesCurso = 0;
+                try {
+                    const responseHoras = await fetch(`${API_URL}?action=getHistorialHoras&cursoId=${encodeURIComponent(cursoActual)}`);
+                    const dataHoras = await responseHoras.json();
+                    totalClasesCurso = dataHoras.historial ? dataHoras.historial.length : 0;
+                } catch (e) { console.warn("No se pudo cargar historial de horas", e); }
+
+                // ✅ CORRECCIÓN CRÍTICA: Actualizar la TARJETA GLOBAL con los IDs correctos
+                // Usamos los IDs de la tarjeta única que dejaste activa
+                document.getElementById('totalClasesGlobales').textContent = totalClasesCurso; 
+                document.getElementById('totalParticipantesGlobales').textContent = partData.participantes ? partData.participantes.length : 0;
                 
                 tbody.innerHTML = '';
                 
@@ -2446,6 +2434,7 @@ function actualizarVistaAdmin() {
                     const porcGlobal = asistenciaGlobal[p.cedula] || 0;
                     sumaPorcentajes += porcGlobal;
                     
+                    // Función auxiliar para colores de badge
                     const getBadgeClass = (val) => val >= 80 ? 'porc-alto' : (val >= 60 ? 'porc-medio' : 'porc-bajo');
                     
                     row.innerHTML = `
@@ -2462,7 +2451,7 @@ function actualizarVistaAdmin() {
                                 <input type="radio" name="asis_${p.cedula}" value="Ausente"> ❌
                             </label>
                             <label style="cursor: pointer; color: #f39c12; font-weight: bold;">
-                                <input type="radio" name="asis_${p.cedula}" value="Justificado"> ⚠️
+                                <input type="radio" name="asis_${p.cedula}" value="Justificado"> ️
                             </label>
                         </td>
                         <td>
@@ -2473,15 +2462,15 @@ function actualizarVistaAdmin() {
                     tbody.appendChild(row);
                 });
                 
+                // Al final del forEach, actualizamos el promedio global en la tarjeta
                 const promedioGeneral = partData.participantes.length > 0 ? Math.round(sumaPorcentajes / partData.participantes.length) : 0;
-                document.getElementById('promedioAsistenciaCurso').textContent = promedioGeneral + '%';
+                document.getElementById('promedioAsistenciaGlobal').textContent = promedioGeneral + '%';
                 
             } catch (error) {
                 console.error('❌ Error cargando lista:', error);
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error al cargar la lista.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error al cargar la lista. Revisa la consola.</td></tr>';
             }
         }
-
         async function guardarAsistenciaTabla() {
             console.log("💾 Guardando asistencia...");
             
