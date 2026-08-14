@@ -1083,25 +1083,30 @@
             <section id="asistencia" class="section">
                 <div class="section-header"><h3 class="section-title">📋 Control de Asistencia</h3></div>
                 
-                <!-- RESUMEN DE ASISTENCIA DEL CURSO -->
-                <div id="resumenAsistenciaCard" class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
-                    <h4 style="margin-bottom: 15px; color: white;"> Resumen de Asistencia del Curso</h4>
-                    <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; text-align: center;">
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold;" id="totalClasesAsistencia">0</div>
-                            <div style="font-size: 14px; opacity: 0.9;">Clases Registradas</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold;" id="promedioAsistenciaCurso">0%</div>
-                            <div style="font-size: 14px; opacity: 0.9;">Promedio General</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 32px; font-weight: bold;" id="totalParticipantesAsistencia">0</div>
-                            <div style="font-size: 14px; opacity: 0.9;">Participantes Activos</div>
-                        </div>
+                <!-- NUEVO: TABLA DE MONITOREO GLOBAL (Se carga automáticamente) -->
+                <div class="card" style="margin-bottom: 25px;">
+                    <h4 style="margin-bottom: 15px; color: #2c3e50;">📊 Monitoreo Global de Asistencia por Participante</h4>
+                    <div id="mensajeSinCursoGlobal" class="hidden" style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                        <p style="color: #7f8c8d;">Selecciona un curso arriba para ver el resumen.</p>
+                    </div>
+                    <div class="table-container" id="contenedorTablaGlobal">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>C.I.</th>
+                                    <th>Nombre</th>
+                                    <th style="text-align:center;">% Seguridad</th>
+                                    <th style="text-align:center;">% Teoría</th>
+                                    <th style="text-align:center;">% Práctica</th>
+                                    <th style="text-align:center;">Promedio Global</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaAsistenciaGlobal"></tbody>
+                        </table>
                     </div>
                 </div>
 
+                <!-- EXISTENTE: Toma de lista por clase -->
                 <div class="card" style="margin-bottom: 20px;">
                     <h4 style="margin-bottom: 15px; color: #2c3e50;">1. Selecciona la clase a evaluar</h4>
                     <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
@@ -1126,7 +1131,7 @@
                                 <tr>
                                     <th>C.I.</th>
                                     <th>Nombre</th>
-                                    <th style="text-align: center;">% Asistencia</th>
+                                    <th style="text-align: center;">% Asistencia Global</th>
                                     <th style="text-align: center;">Estado Hoy</th>
                                     <th>Observación (Opcional)</th>
                                 </tr>
@@ -2128,6 +2133,7 @@ function actualizarVistaAdmin() {
                 if (cursoActual) {
                     console.log("🔄 Llamando a cargarClasesEnDropdown()");
                     cargarClasesEnDropdown();
+                    cargarMonitoreoGlobalAsistencia(); // ← AGREGAR ESTA LÍNEA
                 } else {
                     console.warn("⚠️ No hay curso seleccionado aún. Por favor, selecciona un curso del menú superior primero.");
                 }
@@ -2139,6 +2145,79 @@ function actualizarVistaAdmin() {
                 }
 
         }
+
+            // ==========================================
+            // MÓDULO: MONITOREO GLOBAL DE ASISTENCIA
+            // ==========================================
+            async function cargarMonitoreoGlobalAsistencia() {
+                const tbody = document.getElementById('tablaAsistenciaGlobal');
+                const contenedor = document.getElementById('contenedorTablaGlobal');
+                const mensaje = document.getElementById('mensajeSinCursoGlobal');
+                
+                if (!cursoActual) {
+                    contenedor.style.display = 'none';
+                    mensaje.classList.remove('hidden');
+                    return;
+                }
+                
+                mensaje.classList.add('hidden');
+                contenedor.style.display = 'block';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">⏳ Calculando estadísticas globales...</td></tr>';
+                
+                try {
+                    // 1. Obtener resumen de asistencia global
+                    const responseAsis = await fetch(`${API_URL}?action=getResumenGlobalAsistencia&cursoId=${encodeURIComponent(cursoActual)}`);
+                    const dataAsis = await responseAsis.json();
+                    
+                    // 2. Obtener nombres de participantes para mostrarlos
+                    const responsePart = await fetch(`${API_URL}?action=getParticipantes&cursoId=${encodeURIComponent(cursoActual)}`);
+                    const partData = await responsePart.json();
+                    
+                    // Crear mapa cedula -> nombre
+                    const mapNombres = {};
+                    if (partData.participantes) {
+                        partData.participantes.forEach(p => { mapNombres[p.cedula] = p.nombre; });
+                    }
+                    
+                    tbody.innerHTML = '';
+                    
+                    if (!dataAsis.participantes || dataAsis.participantes.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: #7f8c8d;">No hay registros de asistencia aún.</td></tr>';
+                        return;
+                    }
+                    
+                    // Ordenar por promedio global (menor a mayor para ver primero los que necesitan atención)
+                    dataAsis.participantes.sort((a, b) => a.promedioGlobal - b.promedioGlobal);
+                    
+                    dataAsis.participantes.forEach(p => {
+                        const nombre = mapNombres[p.cedula] || p.cedula;
+                        
+                        // Determinar colores según porcentaje
+                        const getColor = (porc) => {
+                            if (porc >= 80) return 'badge-success';
+                            if (porc >= 60) return 'badge-warning';
+                            return 'badge-danger';
+                        };
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${p.cedula}</td>
+                                <td>${nombre}</td>
+                                <td style="text-align:center;"><span class="badge ${getColor(p.porcentajeSeguridad)}">${p.porcentajeSeguridad}%</span></td>
+                                <td style="text-align:center;"><span class="badge ${getColor(p.porcentajeTeoria)}">${p.porcentajeTeoria}%</span></td>
+                                <td style="text-align:center;"><span class="badge ${getColor(p.porcentajePractica)}">${p.porcentajePractica}%</span></td>
+                                <td style="text-align:center; font-weight:bold;">
+                                    <span class="badge ${getColor(p.promedioGlobal)}" style="font-size:14px; padding:6px 12px;">${p.promedioGlobal}%</span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Error cargando monitoreo global:', error);
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: #e74c3c;">Error al cargar estadísticas.</td></tr>';
+                }
+            }
 
         // --- MÓDULO: ASISTENCIA ---
         async function cargarClasesEnDropdown() {
