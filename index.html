@@ -1118,6 +1118,25 @@
                     </div>
                 </div>
 
+                <!-- RESUMEN GLOBAL DE ASISTENCIA -->
+                <div id="resumenAsistenciaCard" class="card" style="margin-bottom: 25px; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <h4 style="margin-bottom: 15px; color: white;">📊 Resumen Global de Asistencia</h4>
+                    <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; text-align: center;">
+                        <div>
+                            <div style="font-size: 32px; font-weight: bold;" id="totalClasesGlobales">-</div>
+                            <div style="font-size: 14px; opacity: 0.9;">Total Clases Dictadas</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 32px; font-weight: bold;" id="promedioAsistenciaGlobal">0%</div>
+                            <div style="font-size: 14px; opacity: 0.9;">Promedio General Curso</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 32px; font-weight: bold;" id="totalParticipantesGlobales">0</div>
+                            <div style="font-size: 14px; opacity: 0.9;">Participantes Activos</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- NUEVO: TABLA DE MONITOREO GLOBAL -->
                 <div class="card" style="margin-bottom: 25px;">
                     <h4 style="margin-bottom: 15px; color: #2c3e50;">📈 Monitoreo Global de Asistencia por Participante</h4>
@@ -2167,6 +2186,7 @@ function actualizarVistaAdmin() {
                 if (cursoActual) {
                     console.log("🔄 Llamando a cargarClasesEnDropdown()");
                     cargarClasesEnDropdown();
+                    cargarResumenGlobalAsistencia(); // ← AGREGAR ESTA LÍNEA
                     cargarMonitoreoGlobalAsistencia(); // ← AGREGAR ESTA LÍNEA
                 } else {
                     console.warn("⚠️ No hay curso seleccionado aún. Por favor, selecciona un curso del menú superior primero.");
@@ -2230,7 +2250,7 @@ function actualizarVistaAdmin() {
                         const getBadgeClass = (val) => val >= 80 ? 'porc-alto' : (val >= 60 ? 'porc-medio' : 'porc-bajo');
                         
                         // SOLUCIÓN 2: Usar nombre del mapa, si no existe usar cédula
-                        const nombreMostrar = mapNombres[p.cedula] || p.cedula; 
+                        const nombreMostrar = mapNombres[p.cedula] || p.nombre || p.cedula; 
                         
                         tbody.innerHTML += `
                             <tr>
@@ -2251,6 +2271,53 @@ function actualizarVistaAdmin() {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: #e74c3c;">Error al cargar estadísticas.</td></tr>';
                 }
             }
+
+        // ==========================================
+        // FUNCIÓN: CARGAR RESUMEN GLOBAL AUTOMÁTICO
+        // Se ejecuta al entrar a la sección de Asistencia
+        // ==========================================
+        async function cargarResumenGlobalAsistencia() {
+            if (!cursoActual) return;
+
+            try {
+                // 1. Obtener total de clases dictadas (desde el módulo de Horas)
+                const responseHoras = await fetch(`${API_URL}?action=getHistorialHoras&cursoId=${encodeURIComponent(cursoActual)}`);
+                const dataHoras = await responseHoras.json();
+                const totalClases = dataHoras.historial ? dataHoras.historial.length : 0;
+                
+                // 2. Obtener resumen de asistencia global (Backend)
+                const responseAsis = await fetch(`${API_URL}?action=getResumenGlobalAsistencia&cursoId=${encodeURIComponent(cursoActual)}`);
+                const dataAsis = await responseAsis.json();
+                
+                // 3. Obtener lista de participantes para contar activos
+                const responsePart = await fetch(`${API_URL}?action=getParticipantes&cursoId=${encodeURIComponent(cursoActual)}`);
+                const dataPart = await responsePart.json();
+                const totalParticipantes = dataPart.participantes ? dataPart.participantes.length : 0;
+
+                // 4. Calcular promedio global real basado en los datos del backend
+                let sumaPorcentajes = 0;
+                let count = 0;
+                
+                if (dataAsis.exito && dataAsis.participantes) {
+                    dataAsis.participantes.forEach(p => {
+                        // Aseguramos que no pase de 100%
+                        const porc = Math.min(p.promedioGlobal || 0, 100);
+                        sumaPorcentajes += porc;
+                        count++;
+                    });
+                }
+
+                const promedioReal = count > 0 ? Math.round(sumaPorcentajes / count) : 0;
+
+                // 5. Actualizar la tarjeta superior
+                document.getElementById('totalClasesGlobales').textContent = totalClases;
+                document.getElementById('promedioAsistenciaGlobal').textContent = promedioReal + '%';
+                document.getElementById('totalParticipantesGlobales').textContent = totalParticipantes;
+
+            } catch (error) {
+                console.error("Error cargando resumen global:", error);
+            }
+        }    
 
         // --- MÓDULO: ASISTENCIA ---
         async function cargarClasesEnDropdown() {
