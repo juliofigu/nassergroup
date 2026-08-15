@@ -2557,113 +2557,115 @@ function actualizarVistaAdmin() {
             }
         }
 
-// --- MÓDULO: PAGO A PROFESORES (SOLO ADMIN) ---
-async function cargarResumenProfesores() {
-    const tbody = document.getElementById('tablaResumenProfesores');
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">⏳ Cargando...</td></tr>';
-    
-    try {
-        const response = await fetch(`${API_URL}?action=getResumenHorasProfesores&rolUsuario=${encodeURIComponent(rolUsuario)}`);
-        const data = await response.json();
-        
-        tbody.innerHTML = '';
-        
-        if (data.error) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #e74c3c;">${data.error}</td></tr>`;
-            return;
-        }
-        
-        if (data.resumen && data.resumen.length > 0) {
-            data.resumen.forEach(item => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${item.profesor}</td>
-                        <td>${item.materia}</td>
-                        <td>${item.curso}</td>
-                        <td style="font-weight: bold; color: #667eea;">${item.totalHoras} h</td>
-                        <td>
-                            <button class="btn-success" onclick="abrirModalPagoProfesor('${item.profesor}', '${item.materia}', '${item.curso}', ${item.totalHoras})" style="padding: 5px 10px; font-size: 11px;">
-                                💵 Pagar
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-        } else {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay horas registradas aún.</td></tr>';
-        }
-    } catch (error) {
-        console.error('Error cargando resumen de profesores:', error);
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error de conexión.</td></tr>';
-    }
-}
-
-function abrirModalPagoProfesor(profesor, materia, curso, horas) {
-    document.getElementById('pagoProfNombre').value = profesor;
-    document.getElementById('pagoProfMateria').value = materia;
-    document.getElementById('pagoProfMateria').dataset.curso = curso; // Guardamos el curso temporalmente
-    document.getElementById('pagoProfHoras').value = horas;
-    document.getElementById('pagoProfFecha').valueAsDate = new Date();
-    document.getElementById('pagoProfMonto').value = '';
-    document.getElementById('pagoProfPeriodo').value = '';
-    document.getElementById('modalPagoProfesor').classList.remove('hidden');
-}
-
-function cerrarModalPagoProfesor() {
-    document.getElementById('modalPagoProfesor').classList.add('hidden');
-    document.getElementById('formPagoProfesor').reset();
-}
-
-async function guardarPagoProfesor() {
-    const btn = document.querySelector('#formPagoProfesor button[type="submit"]');
-    const textoOriginal = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Procesando...';
-
-    const datos = {
-        action: 'registrarPagoProfesor',
-        rolUsuario: rolUsuario,
-        usuarioAdmin: usuarioActual,
-        profesor: document.getElementById('pagoProfNombre').value,
-        materia: document.getElementById('pagoProfMateria').value,
-        curso: document.getElementById('pagoProfMateria').dataset.curso,
-        horas: document.getElementById('pagoProfHoras').value,
-        monto: document.getElementById('pagoProfMonto').value,
-        periodo: document.getElementById('pagoProfPeriodo').value,
-        fecha: document.getElementById('pagoProfFecha').value
-    };
-
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify(datos)
-        });
-        const result = await response.json();
-        
-        if (result.exito) {
-            alert('✅ ' + result.mensaje);
-            cerrarModalPagoProfesor();
-            cargarResumenProfesores(); // Recargar la tabla
-        } else {
-            alert('❌ Error: ' + result.error);
-        }
-    } catch (error) {
-        console.error('❌ Error de conexión:', error);
-        alert('❌ Error de conexión al registrar el pago.');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = textoOriginal;
-    }
-}
-
-    // Cerrar modales al hacer clic en el overlay (fondo oscuro)
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.add('hidden');
+        // --- MÓDULO: PAGO A PROFESORES (SOLO ADMIN) ---
+        async function cargarResumenProfesores() {
+            const tbody = document.getElementById('tablaResumenProfesores');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">⏳ Cargando resumen...</td></tr>';
+            
+            try {
+                const response = await fetch(`${API_URL}?action=getResumenHorasProfesores&rolUsuario=${encodeURIComponent(rolUsuario)}`);
+                const data = await response.json();
+                
+                tbody.innerHTML = '';
+                
+                if (data.error) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #e74c3c;">${data.error}</td></tr>`;
+                    return;
+                }
+                
+                // El backend ahora solo devuelve items con horas > 0
+                if (data.resumen && data.resumen.length > 0) {
+                    data.resumen.forEach(item => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${item.profesor}</td>
+                                <td>${item.materia}</td>
+                                <td>${item.curso}</td>
+                                <td style="font-weight: bold; color: #667eea;">${item.totalHoras} h</td>
+                                <td>
+                                    <button class="btn-success" onclick="abrirModalPagoProfesor('${item.profesor}', '${item.materia}', '${item.curso}', ${item.totalHoras})" style="padding: 5px 10px; font-size: 11px;">
+                                        💵 Pagar
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    // Si no hay datos, significa que todo está al día
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #27ae60; font-weight:bold;">✅ Todos los profesores están al día. No hay horas pendientes.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error cargando resumen:', error);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error de conexión.</td></tr>';
             }
-        });
-    });
+        }
+
+        function abrirModalPagoProfesor(profesor, materia, curso, horas) {
+            document.getElementById('pagoProfNombre').value = profesor;
+            document.getElementById('pagoProfMateria').value = materia;
+            document.getElementById('pagoProfMateria').dataset.curso = curso; // Guardamos el curso temporalmente
+            document.getElementById('pagoProfHoras').value = horas;
+            document.getElementById('pagoProfFecha').valueAsDate = new Date();
+            document.getElementById('pagoProfMonto').value = '';
+            document.getElementById('pagoProfPeriodo').value = '';
+            document.getElementById('modalPagoProfesor').classList.remove('hidden');
+        }
+
+        function cerrarModalPagoProfesor() {
+            document.getElementById('modalPagoProfesor').classList.add('hidden');
+            document.getElementById('formPagoProfesor').reset();
+        }
+
+        async function guardarPagoProfesor() {
+            const btn = document.querySelector('#formPagoProfesor button[type="submit"]');
+            const textoOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Procesando...';
+
+            const datos = {
+                action: 'registrarPagoProfesor',
+                rolUsuario: rolUsuario,
+                usuarioAdmin: usuarioActual,
+                profesor: document.getElementById('pagoProfNombre').value,
+                materia: document.getElementById('pagoProfMateria').value,
+                curso: document.getElementById('pagoProfMateria').dataset.curso,
+                horas: document.getElementById('pagoProfHoras').value,
+                monto: document.getElementById('pagoProfMonto').value,
+                periodo: document.getElementById('pagoProfPeriodo').value,
+                fecha: document.getElementById('pagoProfFecha').value
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(datos)
+                });
+                const result = await response.json();
+                
+                if (result.exito) {
+                    alert('✅ ' + result.mensaje);
+                    cerrarModalPagoProfesor();
+                    cargarResumenProfesores(); // Recargar la tabla
+                } else {
+                    alert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('❌ Error de conexión:', error);
+                alert('❌ Error de conexión al registrar el pago.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            }
+        }
+
+            // Cerrar modales al hacer clic en el overlay (fondo oscuro)
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
+            });
 
     </script>
 
