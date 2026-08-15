@@ -2559,57 +2559,73 @@ function actualizarVistaAdmin() {
 
         // --- MÓDULO: PAGO A PROFESORES (SOLO ADMIN) ---
         async function cargarResumenProfesores() {
-            const tbody = document.getElementById('tablaResumenProfesores');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">⏳ Cargando resumen...</td></tr>';
+        const tbody = document.getElementById('tablaResumenProfesores');
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;"> Cargando resumen...</td></tr>';
+        
+        try {
+            const response = await fetch(`${API_URL}?action=getResumenHorasProfesores&rolUsuario=${encodeURIComponent(rolUsuario)}`);
+            const data = await response.json();
+            tbody.innerHTML = '';
             
-            try {
-                const response = await fetch(`${API_URL}?action=getResumenHorasProfesores&rolUsuario=${encodeURIComponent(rolUsuario)}`);
-                const data = await response.json();
-                
-                tbody.innerHTML = '';
-                
-                if (data.error) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #e74c3c;">${data.error}</td></tr>`;
-                    return;
-                }
-                
-                // El backend ahora solo devuelve items con horas > 0
-                if (data.resumen && data.resumen.length > 0) {
-                    data.resumen.forEach(item => {
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${item.profesor}</td>
-                                <td>${item.materia}</td>
-                                <td>${item.curso}</td>
-                                <td style="font-weight: bold; color: #667eea;">${item.totalHoras} h</td>
-                                <td>
-                                    <button class="btn-success" onclick="abrirModalPagoProfesor('${item.profesor}', '${item.materia}', '${item.curso}', ${item.totalHoras})" style="padding: 5px 10px; font-size: 11px;">
-                                        💵 Pagar
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    // Si no hay datos, significa que todo está al día
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #27ae60; font-weight:bold;">✅ Todos los profesores están al día. No hay horas pendientes.</td></tr>';
-                }
-            } catch (error) {
-                console.error('Error cargando resumen:', error);
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error de conexión.</td></tr>';
+            if (data.error) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #e74c3c;">${data.error}</td></tr>`;
+                return;
             }
+            
+            if (data.resumen && data.resumen.length > 0) {
+                data.resumen.forEach(item => {
+                    const horas = item.totalHoras;
+                    let colorClase = 'color: #667eea;';
+                    let badgeTexto = `${horas} h`;
+                    
+                    if (horas < 5) {
+                        colorClase = 'color: #27ae60;'; // Verde si es poco
+                        badgeTexto = `${horas} h ⚡`;
+                    } else if (horas > 20) {
+                        colorClase = 'color: #e74c3c;'; // Rojo si es mucho
+                        badgeTexto = `${horas} h 🔴`;
+                    }
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${item.profesor}</td>
+                            <td>${item.materia}</td>
+                            <td>${item.curso}</td>
+                            <td style="font-weight: bold; ${colorClase}">${badgeTexto}</td>
+                            <td>
+                                <button class="btn-success" onclick="abrirModalPagoProfesor('${item.profesor}', '${item.materia}', '${item.curso}', ${item.totalHoras})" style="padding: 5px 10px; font-size: 11px;">
+                                    💵 Pagar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #27ae60; font-weight:bold;">✅ Todos los profesores están al día. No hay horas pendientes.</td></tr>';
+            }
+        } catch (error) {
+            console.error('Error cargando resumen:', error);
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #e74c3c;">Error de conexión.</td></tr>';
         }
+    }
 
         function abrirModalPagoProfesor(profesor, materia, curso, horas) {
-            document.getElementById('pagoProfNombre').value = profesor;
-            document.getElementById('pagoProfMateria').value = materia;
-            document.getElementById('pagoProfMateria').dataset.curso = curso; // Guardamos el curso temporalmente
-            document.getElementById('pagoProfHoras').value = horas;
-            document.getElementById('pagoProfFecha').valueAsDate = new Date();
-            document.getElementById('pagoProfMonto').value = '';
-            document.getElementById('pagoProfPeriodo').value = '';
-            document.getElementById('modalPagoProfesor').classList.remove('hidden');
-        }
+        document.getElementById('pagoProfNombre').value = profesor;
+        document.getElementById('pagoProfMateria').value = materia;
+        document.getElementById('pagoProfMateria').dataset.curso = curso;
+        
+        // ✅ NUEVO: Mostrar horas pendientes en campo readonly
+        document.getElementById('pagoProfHorasPendientes').value = horas;
+        
+        // ✅ NUEVO: Campo editable para el abono (por defecto el total, pero modificable)
+        document.getElementById('pagoProfHoras').value = horas;
+        document.getElementById('pagoProfHoras').max = horas * 2; // Permitir hasta el doble para excedentes
+        
+        document.getElementById('pagoProfFecha').valueAsDate = new Date();
+        document.getElementById('pagoProfMonto').value = '';
+        document.getElementById('pagoProfPeriodo').value = '';
+        document.getElementById('modalPagoProfesor').classList.remove('hidden');
+    }
 
         function cerrarModalPagoProfesor() {
             document.getElementById('modalPagoProfesor').classList.add('hidden');
@@ -2617,46 +2633,58 @@ function actualizarVistaAdmin() {
         }
 
         async function guardarPagoProfesor() {
-            const btn = document.querySelector('#formPagoProfesor button[type="submit"]');
-            const textoOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Procesando...';
+        const btn = document.querySelector('#formPagoProfesor button[type="submit"]');
+        const textoOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = ' Procesando...';
 
-            const datos = {
-                action: 'registrarPagoProfesor',
-                rolUsuario: rolUsuario,
-                usuarioAdmin: usuarioActual,
-                profesor: document.getElementById('pagoProfNombre').value,
-                materia: document.getElementById('pagoProfMateria').value,
-                curso: document.getElementById('pagoProfMateria').dataset.curso,
-                horas: document.getElementById('pagoProfHoras').value,
-                monto: document.getElementById('pagoProfMonto').value,
-                periodo: document.getElementById('pagoProfPeriodo').value,
-                fecha: document.getElementById('pagoProfFecha').value
-            };
+        const horasAbono = parseFloat(document.getElementById('pagoProfHoras').value);
+        const horasPendientes = parseFloat(document.getElementById('pagoProfHorasPendientes').value);
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(datos)
-                });
-                const result = await response.json();
-                
-                if (result.exito) {
-                    alert('✅ ' + result.mensaje);
-                    cerrarModalPagoProfesor();
-                    cargarResumenProfesores(); // Recargar la tabla
-                } else {
-                    alert('❌ Error: ' + result.error);
-                }
-            } catch (error) {
-                console.error('❌ Error de conexión:', error);
-                alert('❌ Error de conexión al registrar el pago.');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
-            }
+        // Validación: no permitir abono negativo
+        if (horasAbono <= 0) {
+            alert('⚠️ Las horas a abonar deben ser mayores a 0');
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+            return;
         }
+
+        const datos = {
+            action: 'registrarPagoProfesor',
+            rolUsuario: rolUsuario,
+            usuarioAdmin: usuarioActual,
+            profesor: document.getElementById('pagoProfNombre').value,
+            materia: document.getElementById('pagoProfMateria').value,
+            curso: document.getElementById('pagoProfMateria').dataset.curso,
+            horasPendientes: horasPendientes, // ✅ NUEVO: Horas que debía en esta fila
+            horasAbono: horasAbono, // ✅ NUEVO: Horas que está abonando
+            monto: document.getElementById('pagoProfMonto').value,
+            periodo: document.getElementById('pagoProfPeriodo').value,
+            fecha: document.getElementById('pagoProfFecha').value
+        };
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(datos)
+            });
+            const result = await response.json();
+            
+            if (result.exito) {
+                alert('✅ ' + result.mensaje);
+                cerrarModalPagoProfesor();
+                cargarResumenProfesores(); // Recargar la tabla
+            } else {
+                alert('❌ Error: ' + result.error);
+            }
+        } catch (error) {
+            console.error('❌ Error de conexión:', error);
+            alert('❌ Error de conexión al registrar el pago.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    }
 
             // Cerrar modales al hacer clic en el overlay (fondo oscuro)
             document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -2792,6 +2820,7 @@ function actualizarVistaAdmin() {
             </div>
 
             <!-- MODAL PARA PAGAR A PROFESOR -->
+            <!-- MODAL PARA PAGAR A PROFESOR -->
             <div id="modalPagoProfesor" class="modal-overlay hidden">
                 <div class="modal-box">
                     <div class="modal-header">
@@ -2809,8 +2838,13 @@ function actualizarVistaAdmin() {
                                 <input type="text" id="pagoProfMateria" readonly style="background: #f8f9fa;">
                             </div>
                             <div class="form-group">
-                                <label>Total Horas</label>
-                                <input type="number" id="pagoProfHoras" readonly style="background: #f8f9fa;">
+                                <label>Horas Pendientes en esta fila</label>
+                                <input type="number" id="pagoProfHorasPendientes" readonly style="background: #fff3cd; font-weight: bold;">
+                            </div>
+                            <div class="form-group">
+                                <label>Horas a Abonar *</label>
+                                <input type="number" id="pagoProfHoras" step="0.5" min="0.5" placeholder="Ej: 5" required style="background: #d4edda; border: 2px solid #27ae60;">
+                                <small style="color: #7f8c8d;">Puedes abonar parcial o total</small>
                             </div>
                             <div class="form-group">
                                 <label>Monto a Pagar (USD) *</label>
@@ -2825,9 +2859,14 @@ function actualizarVistaAdmin() {
                                 <input type="date" id="pagoProfFecha" required>
                             </div>
                         </div>
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 0; font-size: 14px; color: #1976d2;">
+                                <strong>ℹ️ Nota:</strong> Si abonas más horas de las pendientes en esta fila, el excedente se aplicará automáticamente a otras filas pendientes del mismo profesor.
+                            </p>
+                        </div>
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
                             <button type="button" class="btn-cancel" onclick="cerrarModalPagoProfesor()">Cancelar</button>
-                            <button type="submit" class="btn-success" style="flex: 1;">💾 Registrar Pago</button>
+                            <button type="submit" class="btn-success" style="flex: 1;">💾 Registrar Abono</button>
                         </div>
                     </form>
                 </div>
