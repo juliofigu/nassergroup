@@ -1815,20 +1815,120 @@
             document.getElementById('modalPago').classList.remove('hidden');
         }
 
-        async function cargarParticipantesEnDropdown() {
-            const select = document.getElementById('pagoParticipante');
-            select.innerHTML = '<option value="">Selecciona un participante...</option>';
-            try {
-                const response = await fetch(`${API_URL}?action=getParticipantes&cursoId=${encodeURIComponent(cursoActual)}`);
-                const data = await response.json();
-                data.participantes.forEach(p => {
-                    const option = document.createElement('option');
-                    option.value = p.cedula;
-                    option.textContent = `${p.nombre} (C.I.: ${p.cedula})`;
-                    select.appendChild(option);
-                });
-            } catch (error) { console.error(error); }
+        // ==========================================
+    // FUNCIÓN: Detectar automáticamente el próximo número de abono
+    // ==========================================
+    async function detectarProximoAbono() {
+        const participanteSelect = document.getElementById('pagoParticipante');
+        const abonoSelect = document.getElementById('pagoAbonoNum');
+        const infoAbono = document.getElementById('infoAbono');
+        const mensajeAbono = document.getElementById('mensajeAbono');
+        const cedula = participanteSelect.value;
+        
+        if (!cedula) {
+            // Resetear si no hay participante seleccionado
+            abonoSelect.innerHTML = `
+                <option value="1">Abono 1</option>
+                <option value="2">Abono 2</option>
+                <option value="3">Abono 3</option>
+            `;
+            infoAbono.textContent = '';
+            mensajeAbono.textContent = '';
+            return;
         }
+        
+        try {
+            // Obtener pagos existentes del participante
+            const response = await fetch(`${API_URL}?action=getPagos&cursoId=${encodeURIComponent(cursoActual)}`);
+            const data = await response.json();
+            
+            const pagosArray = data.pagos || [];
+            
+            // Filtrar pagos de este participante específico
+            const pagosParticipante = pagosArray.filter(pago => String(pago.cedula) === String(cedula));
+            
+            // Obtener números de abono ya utilizados
+            const abonosUtilizados = pagosParticipante.map(pago => parseInt(pago.abonoNum));
+            
+            // Determinar el próximo abono disponible
+            let proximoAbono = 1;
+            for (let i = 1; i <= 3; i++) {
+                if (!abonosUtilizados.includes(i)) {
+                    proximoAbono = i;
+                    break;
+                }
+            }
+            
+            // Verificar si ya completó los 3 abonos
+            if (abonosUtilizados.length >= 3) {
+                infoAbono.textContent = '⚠️ Este participante ya completó los 3 abonos';
+                infoAbono.style.color = '#e74c3c';
+                mensajeAbono.textContent = '';
+                
+                // Deshabilitar todos los abonos
+                abonoSelect.innerHTML = '<option value="">Abonos completados</option>';
+                abonoSelect.disabled = true;
+                return;
+            }
+            
+            // Mostrar información
+            infoAbono.textContent = `Abonos realizados: ${abonosUtilizados.length} de 3`;
+            infoAbono.style.color = '#667eea';
+            mensajeAbono.textContent = `✅ Próximo abono disponible: #${proximoAbono}`;
+            
+            // Reconstruir el select con opciones deshabilitadas
+            let optionsHTML = '';
+            for (let i = 1; i <= 3; i++) {
+                const estaUsado = abonosUtilizados.includes(i);
+                const selected = i === proximoAbono ? 'selected' : '';
+                const disabled = estaUsado ? 'disabled' : '';
+                const texto = estaUsado ? `Abono ${i} (Realizado)` : `Abono ${i}`;
+                
+                optionsHTML += `<option value="${i}" ${selected} ${disabled}>${texto}</option>`;
+            }
+            
+            abonoSelect.innerHTML = optionsHTML;
+            abonoSelect.disabled = false;
+            
+        } catch (error) {
+            console.error('Error detectando próximo abono:', error);
+            infoAbono.textContent = '';
+            mensajeAbono.textContent = '';
+        }
+    }
+
+    // ==========================================
+    // FUNCIÓN: Cargar participantes en dropdown (MODIFICADA)
+    // ==========================================
+    async function cargarParticipantesEnDropdown() {
+        const select = document.getElementById('pagoParticipante');
+        select.innerHTML = '<option value="">Selecciona un participante...</option>';
+        
+        try {
+            const response = await fetch(`${API_URL}?action=getParticipantes&cursoId=${encodeURIComponent(cursoActual)}`);
+            const data = await response.json();
+            
+            // Filtrar solo participantes activos
+            const participantesActivos = data.participantes.filter(p => p.estado === 'Activo');
+            
+            participantesActivos.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.cedula;
+                option.textContent = `${p.nombre} (C.I.: ${p.cedula})`;
+                select.appendChild(option);
+            });
+            
+            // Resetear abono al cargar
+            document.getElementById('pagoAbonoNum').innerHTML = `
+                <option value="1">Abono 1</option>
+                <option value="2">Abono 2</option>
+                <option value="3">Abono 3</option>
+            `;
+            
+        } catch (error) { 
+            console.error('Error cargando participantes:', error); 
+        }
+    }
 
         function cerrarModalPago() {
             document.getElementById('modalPago').classList.add('hidden');
@@ -2776,22 +2876,34 @@ function actualizarVistaAdmin() {
         }
     }
 
-        function abrirModalPagoProfesor(profesor, materia, curso, horas) {
-        document.getElementById('pagoProfNombre').value = profesor;
-        document.getElementById('pagoProfMateria').value = materia;
-        document.getElementById('pagoProfMateria').dataset.curso = curso;
+        function abrirModalPago() {
+        if (!cursoActual) { 
+            alert('⚠️ Primero selecciona un curso.'); 
+            return; 
+        }
         
-        // ✅ NUEVO: Mostrar horas pendientes en campo readonly
-        document.getElementById('pagoProfHorasPendientes').value = horas;
+        document.getElementById('pagoFecha').valueAsDate = new Date();
+        document.getElementById('pagoReferencia').value = '';
+        document.getElementById('pagoMonto').value = '';
+        document.getElementById('pagoBanco').value = '';
         
-        // ✅ NUEVO: Campo editable para el abono (por defecto el total, pero modificable)
-        document.getElementById('pagoProfHoras').value = horas;
-        document.getElementById('pagoProfHoras').max = horas * 2; // Permitir hasta el doble para excedentes
+        // Limpiar mensajes
+        document.getElementById('infoAbono').textContent = '';
+        document.getElementById('mensajeAbono').textContent = '';
         
-        document.getElementById('pagoProfFecha').valueAsDate = new Date();
-        document.getElementById('pagoProfMonto').value = '';
-        document.getElementById('pagoProfPeriodo').value = '';
-        document.getElementById('modalPagoProfesor').classList.remove('hidden');
+        // Cargar participantes
+        cargarParticipantesEnDropdown();
+        
+        // Resetear select de abono
+        const abonoSelect = document.getElementById('pagoAbonoNum');
+        abonoSelect.innerHTML = `
+            <option value="1">Abono 1</option>
+            <option value="2">Abono 2</option>
+            <option value="3">Abono 3</option>
+        `;
+        abonoSelect.disabled = false;
+        
+        document.getElementById('modalPago').classList.remove('hidden');
     }
 
         function cerrarModalPagoProfesor() {
@@ -2919,17 +3031,55 @@ function actualizarVistaAdmin() {
             <div id="modalPago" class="modal-overlay hidden">
                 <div class="modal-box">
                     <div class="modal-header">
-                        <h3>💰 Registrar Nuevo Pago</h3>
+                        <h3> Registrar Nuevo Pago</h3>
                         <button class="modal-close" onclick="cerrarModalPago()">✕</button>
                     </div>
                     <form id="formPago" onsubmit="event.preventDefault(); guardarPago();">
                         <div class="form-grid">
-                            <div class="form-group"><label>Participante *</label><select id="pagoParticipante" required><option value="">Selecciona un participante...</option></select></div>
-                            <div class="form-group"><label>Fecha del Pago *</label><input type="date" id="pagoFecha" required></div>
-                            <div class="form-group"><label>Monto (USD) *</label><input type="number" id="pagoMonto" step="0.01" min="0.01" placeholder="Ej: 50.00" required></div>
-                            <div class="form-group"><label>Número de Abono *</label><select id="pagoAbonoNum" required><option value="1">Abono 1</option><option value="2">Abono 2</option><option value="3">Abono 3</option></select></div>
-                            <div class="form-group"><label>No. de Referencia *</label><input type="text" id="pagoReferencia" placeholder="Ej: 12345678" required></div>
-                            <div class="form-group"><label>Banco *</label><select id="pagoBanco" required><option value="">Selecciona un banco...</option><option value="Venezuela">Venezuela</option><option value="Banesco">Banesco</option><option value="Mercantil">Mercantil</option><option value="Provincial">Provincial</option><option value="BNC">BNC</option><option value="Bicentenario">Bicentenario</option><option value="Del Tesoro">Del Tesoro</option><option value="Efectivo">Efectivo</option><option value="Binance">BINANCE</option><option value="ZELLE">ZELLE</option><option value="Otro">Otro</option></select></div>
+                            <div class="form-group">
+                                <label>Participante *</label>
+                                <select id="pagoParticipante" required onchange="detectarProximoAbono()">
+                                    <option value="">Selecciona un participante...</option>
+                                </select>
+                                <small id="infoAbono" style="color: #667eea; font-size: 11px; display: block; margin-top: 5px;"></small>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha del Pago *</label>
+                                <input type="date" id="pagoFecha" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Monto (USD) *</label>
+                                <input type="number" id="pagoMonto" step="0.01" min="0.01" placeholder="Ej: 50.00" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Número de Abono *</label>
+                                <select id="pagoAbonoNum" required>
+                                    <option value="1">Abono 1</option>
+                                    <option value="2">Abono 2</option>
+                                    <option value="3">Abono 3</option>
+                                </select>
+                                <small id="mensajeAbono" style="color: #27ae60; font-size: 11px; display: block; margin-top: 5px;"></small>
+                            </div>
+                            <div class="form-group">
+                                <label>No. de Referencia *</label>
+                                <input type="text" id="pagoReferencia" placeholder="Ej: 12345678" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Banco *</label>
+                                <select id="pagoBanco" required>
+                                    <option value="">Selecciona un banco...</option>
+                                    <option value="Venezuela">Venezuela</option>
+                                    <option value="Banesco">Banesco</option>
+                                    <option value="Mercantil">Mercantil</option>
+                                    <option value="Provincial">Provincial</option>
+                                    <option value="BNC">BNC</option>
+                                    <option value="Bicentenario">Bicentenario</option>
+                                    <option value="Del Tesoro">Del Tesoro</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="ZELLE">ZELLE</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
                         </div>
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
                             <button type="button" class="btn-cancel" onclick="cerrarModalPago()">Cancelar</button>
