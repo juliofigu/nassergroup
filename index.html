@@ -998,6 +998,19 @@
                         <div style="font-weight: bold; color: #27ae60;" id="dashEstadoCurso">-</div>
                     </div>
                 </div>
+
+                <!-- NUEVO: CONTEO DE PARTICIPANTES POR CURSO -->
+                <div class="card" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 20px; color: #2c3e50;">📊 Total de Participantes por Curso</h3>
+                    <div id="conteoCursosContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #ecf0f1; text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold; color: #667eea;">
+                            Total General: <span id="totalGeneralParticipantes" style="font-size: 28px;">0</span> participantes
+                        </div>
+                    </div>
+                </div>
                 
                 <p><strong>Materias:</strong> Teoría (Seguridad), Teoría, Práctica</p>
             </div>
@@ -1403,33 +1416,33 @@
         }
 
         function llenarSelectorCursos() {
-        const selector = document.getElementById('courseSelector');
-        selector.innerHTML = '<option value="">Selecciona un curso...</option>';
+    const selector = document.getElementById('courseSelector');
+    selector.innerHTML = '<option value="">Selecciona un curso...</option>';
+    
+    cursosDisponibles.forEach(curso => {
+        const option = document.createElement('option');
+        option.value = curso.id;
         
-        cursosDisponibles.forEach(curso => {
-            const option = document.createElement('option');
-            option.value = curso.id;
-            
-            // ✅ NUEVO: Mostrar estado con emoji
-            let estadoEmoji = '';
-            if (curso.estado === 'Activo') {
-                estadoEmoji = ' ✅';
-            } else if (curso.estado === 'Por Iniciar') {
-                estadoEmoji = ' ';
-            } else {
-                estadoEmoji = ' 🔒';
-            }
-            
-            option.textContent = `${curso.nombre} (${curso.nivel})${estadoEmoji}`;
-            
-            // Deshabilitar cursos que no estén activos
-            if (curso.estado !== 'Activo') {
-                option.disabled = true;
-            }
-            
-            selector.appendChild(option);
-        });
-    }
+        // Mostrar estado con emoji (sin bloquear)
+        let estadoEmoji = '';
+        if (curso.estado === 'Activo') {
+            estadoEmoji = ' ✅';
+        } else if (curso.estado === 'Por Iniciar') {
+            estadoEmoji = ' 🔜';
+        } else if (curso.estado === 'Culminado') {
+            estadoEmoji = ' ';
+        } else {
+            estadoEmoji = ' 🔒';
+        }
+        
+        option.textContent = `${curso.nombre} (${curso.nivel})${estadoEmoji}`;
+        
+        // ✅ NO bloquear ningún curso - todos son seleccionables
+        // option.disabled = false; // Eliminado
+        
+        selector.appendChild(option);
+    });
+}
             
             option.textContent = `${curso.nombre} (${curso.nivel})${estadoTexto}`;
             option.disabled = curso.estado !== 'Activo'; // Deshabilitar cursos no activos
@@ -1437,205 +1450,196 @@
             selector.appendChild(option);
 
         // ==========================================
-        // CARGA DE DATOS DEL CURSO (CORREGIDA)
+        // CARGA DE DATOS DEL CURSO (OPTIMIZADA)
         // ==========================================
         async function cargarCurso() {
-    const cursoId = document.getElementById('courseSelector').value;
-    if (!cursoId) return;
-    
-    cursoActual = cursoId;
-    const curso = cursosDisponibles.find(c => c.id == cursoId);
-    
-    const elCursoNombre = document.getElementById('dashCursoNombre');
-    if (elCursoNombre) elCursoNombre.textContent = curso.nombre;
-    
-    const elHorasPlan = document.getElementById('dashHorasPlan');
-    if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
-    
-    const badge = document.getElementById('courseBadge');
-    if (badge) {
-        badge.textContent = curso.nivel;
-        badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
-    }
-    
-    // ✅ NUEVO: Actualizar fechas y estado en el dashboard
-    const elFechaInicio = document.getElementById('dashFechaInicio');
-    const elFechaFin = document.getElementById('dashFechaFin');
-    const elEstadoCurso = document.getElementById('dashEstadoCurso');
-    
-    if (elFechaInicio) elFechaInicio.textContent = curso.fechaInicio || '-';
-    if (elFechaFin) elFechaFin.textContent = curso.fechaFin || '-';
-    if (elEstadoCurso) {
-        elEstadoCurso.textContent = curso.estado || 'Activo';
-        if (curso.estado === 'Activo') {
-            elEstadoCurso.style.color = '#27ae60'; // Verde
-        } else if (curso.estado === 'Por Iniciar') {
-            elEstadoCurso.style.color = '#f39c12'; // Naranja
-        } else {
-            elEstadoCurso.style.color = '#e74c3c'; // Rojo
-        }
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion)}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
-        const stats = await response.json();
-        
-        const elParticipantes = document.getElementById('dashParticipantes');
-        if (elParticipantes) elParticipantes.textContent = stats.participantes || 0;
-        
-        const elHoras = document.getElementById('dashHoras');
-        if (elHoras) elHoras.textContent = stats.horas || 0;
-        
-        const valorCurso = Number(curso.valorCurso) || 0;
-        const participantesActivos = Number(stats.participantes) || 0;
-        const recaudacion = (stats.recaudacion !== null && stats.recaudacion !== undefined) ? Number(stats.recaudacion) : 0;
-        const tienePermiso = (String(curso.verRecaudacion).trim().toUpperCase() === 'SI') || (rolUsuario === 'ADMIN');
-        
-        const elPorcentaje = document.getElementById('dashPorcentajeCobro');
-        const elDetalle = document.getElementById('dashRecaudacionDetalle');
-        const elProgress = document.getElementById('dashProgressCobro');
-        const elValorCurso = document.getElementById('dashValorCurso');
-        const elRecaudado = document.getElementById('dashRecaudadoTotal');
-        
-        if (!tienePermiso) {
-            if (elPorcentaje) elPorcentaje.textContent = '🔒';
-            if (elDetalle) elDetalle.textContent = 'Sin permiso para ver finanzas';
-            if (elProgress) elProgress.style.width = '0%';
-            if (elValorCurso) elValorCurso.textContent = 'N/A';
-            if (elRecaudado) elRecaudado.textContent = 'N/A';
-        } else {
-            const recaudacionEsperada = valorCurso * participantesActivos;
-            let porcentajeCobro = 0;
-            if (recaudacionEsperada > 0) {
-                porcentajeCobro = (recaudacion / recaudacionEsperada) * 100;
-            }
-            const porcentajeVisual = Math.min(porcentajeCobro, 100);
+            const cursoId = document.getElementById('courseSelector').value;
+            if (!cursoId) return;
             
-            if (elPorcentaje) elPorcentaje.textContent = porcentajeCobro.toFixed(1) + '%';
-            if (elDetalle) elDetalle.textContent = `Recaudado $${recaudacion.toLocaleString()} de $${recaudacionEsperada.toLocaleString()}`;
-            if (elProgress) elProgress.style.width = porcentajeVisual + '%';
-            if (elValorCurso) elValorCurso.textContent = '$' + valorCurso.toLocaleString();
-            if (elRecaudado) elRecaudado.textContent = '$' + recaudacion.toLocaleString();
+            cursoActual = cursoId;
+            const curso = cursosDisponibles.find(c => c.id == cursoId);
             
-            if (elProgress) {
-                if (porcentajeCobro >= 90) elProgress.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
-                else if (porcentajeCobro >= 50) elProgress.style.background = 'linear-gradient(90deg, #f39c12, #f1c40f)';
-                else elProgress.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+            // Actualizar UI básica inmediatamente
+            const elCursoNombre = document.getElementById('dashCursoNombre');
+            if (elCursoNombre) elCursoNombre.textContent = curso.nombre;
+            
+            const elHorasPlan = document.getElementById('dashHorasPlan');
+            if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
+            
+            const badge = document.getElementById('courseBadge');
+            if (badge) {
+                badge.textContent = curso.nivel;
+                badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
+            }
+            
+            try {
+                // ✅ OPTIMIZACIÓN: Obtener estadísticas primero (lo más importante)
+                const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion)}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
+                const stats = await response.json();
+                
+                // Actualizar dashboard
+                const elParticipantes = document.getElementById('dashParticipantes');
+                if (elParticipantes) elParticipantes.textContent = stats.participantes || 0;
+                
+                const elHoras = document.getElementById('dashHoras');
+                if (elHoras) elHoras.textContent = stats.horas || 0;
+                
+                // Estado financiero
+                const valorCurso = Number(curso.valorCurso) || 0;
+                const participantesActivos = Number(stats.participantes) || 0;
+                const recaudacion = (stats.recaudacion !== null && stats.recaudacion !== undefined) ? Number(stats.recaudacion) : 0;
+                const tienePermiso = (String(curso.verRecaudacion).trim().toUpperCase() === 'SI') || (rolUsuario === 'ADMIN');
+                
+                const elPorcentaje = document.getElementById('dashPorcentajeCobro');
+                const elDetalle = document.getElementById('dashRecaudacionDetalle');
+                const elProgress = document.getElementById('dashProgressCobro');
+                const elValorCurso = document.getElementById('dashValorCurso');
+                const elRecaudado = document.getElementById('dashRecaudadoTotal');
+                
+                if (!tienePermiso) {
+                    if (elPorcentaje) elPorcentaje.textContent = '🔒';
+                    if (elDetalle) elDetalle.textContent = 'Sin permiso para ver finanzas';
+                    if (elProgress) elProgress.style.width = '0%';
+                    if (elValorCurso) elValorCurso.textContent = 'N/A';
+                    if (elRecaudado) elRecaudado.textContent = 'N/A';
+                } else {
+                    const recaudacionEsperada = valorCurso * participantesActivos;
+                    let porcentajeCobro = 0;
+                    if (recaudacionEsperada > 0) {
+                        porcentajeCobro = (recaudacion / recaudacionEsperada) * 100;
+                    }
+                    const porcentajeVisual = Math.min(porcentajeCobro, 100);
+                    
+                    if (elPorcentaje) elPorcentaje.textContent = porcentajeCobro.toFixed(1) + '%';
+                    if (elDetalle) elDetalle.textContent = `Recaudado $${recaudacion.toLocaleString()} de $${recaudacionEsperada.toLocaleString()}`;
+                    if (elProgress) elProgress.style.width = porcentajeVisual + '%';
+                    if (elValorCurso) elValorCurso.textContent = '$' + valorCurso.toLocaleString();
+                    if (elRecaudado) elRecaudado.textContent = '$' + recaudacion.toLocaleString();
+                    
+                    if (elProgress) {
+                        if (porcentajeCobro >= 90) elProgress.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
+                        else if (porcentajeCobro >= 50) elProgress.style.background = 'linear-gradient(90deg, #f39c12, #f1c40f)';
+                        else elProgress.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+                    }
+                }
+                
+                // ✅ OPTIMIZACIÓN: Cargar módulos en paralelo (no secuencial)
+                await Promise.all([
+                    cargarParticipantes(cursoId),
+                    cargarPagos(cursoId),
+                    cargarHoras(cursoId),
+                    cargarCalificaciones(cursoId)
+                ]);
+                
+                // Cargar estadísticas del dashboard (conteo por curso)
+                cargarConteoParticipantesPorCurso();
+                
+            } catch (error) {
+                console.error('❌ Error cargando estadísticas:', error);
             }
         }
-        
-        // Carga diferida para no saturar
-        await cargarParticipantes(cursoId);
-        setTimeout(() => cargarPagos(cursoId), 100);
-        setTimeout(() => cargarHoras(cursoId), 200);
-        setTimeout(() => cargarCalificaciones(cursoId), 300);
-        
-    } catch (error) {
-        console.error('❌ Error cargando estadísticas:', error);
-    }
-}
 
         // ==========================================
         // MÓDULO: PARTICIPANTES
         // ==========================================
-async function cargarParticipantes(cursoId) {
-    const contadorEl = document.getElementById('contadorParticipantes');
-    const mensajeVacio = document.getElementById('mensajeSinParticipantes');
-    const contenedorTabla = document.getElementById('contenedorTablaParticipantes');
-    const tbody = document.getElementById('tablaParticipantes');
-    
-    try {
-        // 1. Hacer la petición
-        console.log("🔍 Cargando participantes para curso:", cursoId);
-        const response = await fetch(`${API_URL}?action=getParticipantesConSaldo&cursoId=${encodeURIComponent(cursoId)}`);
-        const data = await response.json();
-        console.log("✅ Datos recibidos:", data);
-        
-        // 2. Manejar errores del servidor
-        if (data.error) {
-            console.error("❌ Error del servidor:", data.error);
-            alert("Error del servidor: " + data.error);
-            return;
-        }
-        
-        // 3. Verificar que haya participantes
-        tbody.innerHTML = '';
-        const total = data.participantes ? data.participantes.length : 0;
-        contadorEl.textContent = total;
-        
-        if (total === 0) {
-            mensajeVacio.classList.remove('hidden');
-            contenedorTabla.classList.add('hidden');
-        } else {
-            mensajeVacio.classList.add('hidden');
-            contenedorTabla.classList.remove('hidden');
+        async function cargarParticipantes(cursoId) {
+            const contadorEl = document.getElementById('contadorParticipantes');
+            const mensajeVacio = document.getElementById('mensajeSinParticipantes');
+            const contenedorTabla = document.getElementById('contenedorTablaParticipantes');
+            const tbody = document.getElementById('tablaParticipantes');
             
-            // 4. Dibujar cada fila
-            data.participantes.forEach(p => {
-                // ✅ CORRECCIÓN 1: Usar los campos correctos del servidor
-                const tieneNotas = p.valorCurso > 0;
-                const saldoPendiente = p.valorCurso - p.totalPagado;
+            try {
+                // 1. Hacer la petición
+                console.log("🔍 Cargando participantes para curso:", cursoId);
+                const response = await fetch(`${API_URL}?action=getParticipantesConSaldo&cursoId=${encodeURIComponent(cursoId)}`);
+                const data = await response.json();
+                console.log("✅ Datos recibidos:", data);
                 
-                // Determinar estado
-                let estadoBadgeClass = 'badge-success';
-                let btnTexto = 'Desactivar';
-                let btnClass = 'btn-warning';
-                
-                if (p.estado === 'Inactivo') {
-                    estadoBadgeClass = 'badge-danger';
-                    btnTexto = 'Activar';
-                    btnClass = 'btn-success';
-                } else if (p.estado === 'Graduado') {
-                    estadoBadgeClass = 'badge-info';
-                    btnTexto = 'Reactivar';
-                    btnClass = 'btn-primary';
+                // 2. Manejar errores del servidor
+                if (data.error) {
+                    console.error("❌ Error del servidor:", data.error);
+                    alert("Error del servidor: " + data.error);
+                    return;
                 }
                 
-                // Determinar saldo
-                let saldoBadgeClass = 'badge-success';
-                let saldoTexto = 'Cancelado';
+                // 3. Verificar que haya participantes
+                tbody.innerHTML = '';
+                const total = data.participantes ? data.participantes.length : 0;
+                contadorEl.textContent = total;
                 
-                if (saldoPendiente > 0) {
-                    saldoBadgeClass = 'badge-danger';
-                    saldoTexto = `Pendiente: $${saldoPendiente.toFixed(2)}`;
-                } else if (saldoPendiente < 0) {
-                    saldoBadgeClass = 'badge-warning';
-                    saldoTexto = 'Sobrepagó';
+                if (total === 0) {
+                    mensajeVacio.classList.remove('hidden');
+                    contenedorTabla.classList.add('hidden');
+                } else {
+                    mensajeVacio.classList.add('hidden');
+                    contenedorTabla.classList.remove('hidden');
+                    
+                    // 4. Dibujar cada fila
+                    data.participantes.forEach(p => {
+                        // ✅ CORRECCIÓN 1: Usar los campos correctos del servidor
+                        const tieneNotas = p.valorCurso > 0;
+                        const saldoPendiente = p.valorCurso - p.totalPagado;
+                        
+                        // Determinar estado
+                        let estadoBadgeClass = 'badge-success';
+                        let btnTexto = 'Desactivar';
+                        let btnClass = 'btn-warning';
+                        
+                        if (p.estado === 'Inactivo') {
+                            estadoBadgeClass = 'badge-danger';
+                            btnTexto = 'Activar';
+                            btnClass = 'btn-success';
+                        } else if (p.estado === 'Graduado') {
+                            estadoBadgeClass = 'badge-info';
+                            btnTexto = 'Reactivar';
+                            btnClass = 'btn-primary';
+                        }
+                        
+                        // Determinar saldo
+                        let saldoBadgeClass = 'badge-success';
+                        let saldoTexto = 'Cancelado';
+                        
+                        if (saldoPendiente > 0) {
+                            saldoBadgeClass = 'badge-danger';
+                            saldoTexto = `Pendiente: $${saldoPendiente.toFixed(2)}`;
+                        } else if (saldoPendiente < 0) {
+                            saldoBadgeClass = 'badge-warning';
+                            saldoTexto = 'Sobrepagó';
+                        }
+                        
+                        // ✅ CORRECCIÓN 2: Usar los campos correctos en el HTML
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${p.cedula}</td>
+                                <td>${p.nombre}</td>
+                                <td>${p.edad}</td>
+                                <td>${p.correo}</td>
+                                <td>${p.telefono}</td>
+                                <td><span class="badge ${estadoBadgeClass}">${p.estado}</span></td>
+                                <td style="text-align: center;">
+                                    <span class="badge ${saldoBadgeClass}" style="font-size: 12px; padding: 5px 10px;">
+                                        ${saldoTexto}
+                                    </span>
+                                    <div style="font-size: 11px; color: #7f8c8d; margin-top: 3px;">
+                                        Valor: $${p.valorCurso} | Pagado: $${p.totalPagado.toFixed(2)}
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="${btnClass}" onclick="cambiarEstadoParticipante('${p.id}', '${p.nombre}', '${p.estado}')" style="margin-right: 5px; padding: 5px 10px; font-size: 11px;">
+                                        🔄 ${btnTexto}
+                                    </button>
+                                    <button class="btn-danger" onclick="eliminarParticipante('${p.id}', '${p.nombre}')" style="padding: 5px 10px; font-size: 11px;">
+                                        🗑️ Eliminar
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
                 }
-                
-                // ✅ CORRECCIÓN 2: Usar los campos correctos en el HTML
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${p.cedula}</td>
-                        <td>${p.nombre}</td>
-                        <td>${p.edad}</td>
-                        <td>${p.correo}</td>
-                        <td>${p.telefono}</td>
-                        <td><span class="badge ${estadoBadgeClass}">${p.estado}</span></td>
-                        <td style="text-align: center;">
-                            <span class="badge ${saldoBadgeClass}" style="font-size: 12px; padding: 5px 10px;">
-                                ${saldoTexto}
-                            </span>
-                            <div style="font-size: 11px; color: #7f8c8d; margin-top: 3px;">
-                                Valor: $${p.valorCurso} | Pagado: $${p.totalPagado.toFixed(2)}
-                            </div>
-                        </td>
-                        <td>
-                            <button class="${btnClass}" onclick="cambiarEstadoParticipante('${p.id}', '${p.nombre}', '${p.estado}')" style="margin-right: 5px; padding: 5px 10px; font-size: 11px;">
-                                🔄 ${btnTexto}
-                            </button>
-                            <button class="btn-danger" onclick="eliminarParticipante('${p.id}', '${p.nombre}')" style="padding: 5px 10px; font-size: 11px;">
-                                🗑️ Eliminar
-                            </button>
-                        </td>
-                    </tr>`;
-            });
+            } catch (error) {
+                console.error('❌ Error al cargar participantes:', error);
+                alert('Error al cargar participantes: ' + error.message);
+            }
         }
-    } catch (error) {
-        console.error('❌ Error al cargar participantes:', error);
-        alert('Error al cargar participantes: ' + error.message);
-    }
-}
 
         function abrirModalParticipante() {
             if (!cursoActual) { alert('⚠️ Primero selecciona un curso.'); return; }
@@ -2080,92 +2084,90 @@ function actualizarVistaAdmin() {
             }
         }
 
+
+
         // ==========================================
-// FUNCION: Cargar conteo de alumnos por curso
-// ==========================================
-async function cargarConteoParticipantesPorCurso() {
-    try {
-        const todosLosCursos = cursosDisponibles;
-        const container = document.getElementById('conteoCursosContainer');
-        let totalGeneral = 0;
-        
-        if (!container) return;
-        
-        container.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando...</div>';
-        
-        const conteos = [];
-        
-        // Obtener conteo de cada curso
-        for (const curso of todosLosCursos) {
+        // FUNCIÓN: Cargar conteo de participantes por curso
+        // ==========================================
+        async function cargarConteoParticipantesPorCurso() {
+            const container = document.getElementById('conteoCursosContainer');
+            const totalGeneralEl = document.getElementById('totalGeneralParticipantes');
+            
+            if (!container || !totalGeneralEl) return;
+            
             try {
-                const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(curso.id)}&puedeVerRecaudacion=NO&rolUsuario=PROFESOR`);
-                const stats = await response.json();
-                const cantidad = stats.participantes || 0;
+                container.innerHTML = '<div style="text-align: center; padding: 20px;"> Cargando...</div>';
                 
-                conteos.push({
-                    nombre: curso.nombre,
-                    nivel: curso.nivel,
-                    cantidad: cantidad,
-                    estado: curso.estado || 'Activo'
+                let totalGeneral = 0;
+                const cursosConDatos = [];
+                
+                // Obtener datos de todos los cursos en paralelo
+                const promesas = cursosDisponibles.map(async (curso) => {
+                    try {
+                        const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(curso.id)}&puedeVerRecaudacion=NO&rolUsuario=PROFESOR`);
+                        const stats = await response.json();
+                        const cantidad = stats.participantes || 0;
+                        
+                        return {
+                            nombre: curso.nombre,
+                            nivel: curso.nivel,
+                            cantidad: cantidad,
+                            id: curso.id
+                        };
+                    } catch (e) {
+                        console.error(`Error cargando stats de ${curso.nombre}:`, e);
+                        return null;
+                    }
                 });
                 
-                totalGeneral += cantidad;
-            } catch (e) {
-                console.error(`Error obteniendo stats de ${curso.nombre}:`, e);
+                const resultados = await Promise.all(promesas);
+                
+                // Filtrar resultados válidos
+                resultados.forEach(curso => {
+                    if (curso) {
+                        cursosConDatos.push(curso);
+                        totalGeneral += curso.cantidad;
+                    }
+                });
+                
+                // Actualizar total general
+                totalGeneralEl.textContent = totalGeneral;
+                
+                // Renderizar tarjetas
+                if (cursosConDatos.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">No hay cursos disponibles</div>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                cursosConDatos.forEach(curso => {
+                    const card = document.createElement('div');
+                    card.style.cssText = `
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 20px;
+                        border-radius: 12px;
+                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                        transition: transform 0.3s;
+                    `;
+                    card.onmouseover = () => card.style.transform = 'translateY(-5px)';
+                    card.onmouseout = () => card.style.transform = 'translateY(0)';
+                    
+                    card.innerHTML = `
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">${curso.nombre}</div>
+                        <div style="font-size: 32px; font-weight: bold;">${curso.cantidad}</div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">participantes</div>
+                        <div style="font-size: 11px; opacity: 0.7; margin-top: 8px;">Nivel: ${curso.nivel}</div>
+                    `;
+                    
+                    container.appendChild(card);
+                });
+                
+            } catch (error) {
+                console.error('❌ Error cargando conteo:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #e74c3c;">Error al cargar</div>';
             }
         }
-        
-        // Renderizar tarjetas
-        container.innerHTML = '';
-        
-        if (conteos.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">No hay cursos disponibles</div>';
-            document.getElementById('totalGeneralParticipantes').textContent = '0';
-            return;
-        }
-        
-        conteos.forEach(curso => {
-            let colorBadge = 'badge-success';
-            if (curso.estado === 'Cerrado') colorBadge = 'badge-danger';
-            else if (curso.estado === 'Por Iniciar') colorBadge = 'badge-warning';
-            
-            const card = document.createElement('div');
-            card.style.cssText = `
-                background: #f8f9fa;
-                padding: 20px;
-                border-radius: 12px;
-                border-left: 4px solid #667eea;
-                transition: transform 0.3s;
-            `;
-            card.onmouseover = () => card.style.transform = 'translateY(-5px)';
-            card.onmouseout = () => card.style.transform = 'translateY(0)';
-            
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                    <h4 style="font-size: 14px; color: #7f8c8d; margin: 0; flex: 1;">${curso.nombre}</h4>
-                    <span class="badge ${colorBadge}" style="font-size: 10px; margin-left: 10px;">${curso.estado}</span>
-                </div>
-                <div style="display: flex; align-items: baseline; gap: 10px;">
-                    <span style="font-size: 28px; font-weight: bold; color: #667eea;">${curso.cantidad}</span>
-                    <span style="font-size: 12px; color: #95a5a6;">participantes</span>
-                </div>
-                <div style="margin-top: 8px; font-size: 11px; color: #bdc3c7;">
-                    Nivel: ${curso.nivel}
-                </div>
-            `;
-            
-            container.appendChild(card);
-        });
-        
-        // Actualizar total general
-        document.getElementById('totalGeneralParticipantes').textContent = totalGeneral;
-        
-    } catch (error) {
-        console.error('❌ Error cargando conteo de participantes:', error);
-        document.getElementById('conteoCursosContainer').innerHTML = 
-            '<div style="text-align: center; padding: 20px; color: #e74c3c;">Error al cargar datos</div>';
-    }
-}
 
         function abrirModalAgregarNota(cedula, nombre) {
             document.getElementById('notaNombre').textContent = nombre;
