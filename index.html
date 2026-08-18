@@ -883,6 +883,58 @@
             .porc-medio { background: #fff3cd; color: #856404; } /* Amarillo 60-79% */
             .porc-bajo { background: #f8d7da; color: #721c24; } /* Rojo < 60% */
 
+            /* ==========================================
+            MEJORAS VISUALES DEL DASHBOARD
+            ========================================== */
+
+            /* Tarjetas de conteo de cursos */
+            #conteoCursosContainer .curso-card {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                transition: transform 0.3s, box-shadow 0.3s;
+                cursor: pointer;
+            }
+
+            #conteoCursosContainer .curso-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            }
+
+            #conteoCursosContainer .curso-card .curso-nombre {
+                font-size: 13px;
+                opacity: 0.9;
+                margin-bottom: 8px;
+                font-weight: 600;
+            }
+
+            #conteoCursosContainer .curso-card .curso-cantidad {
+                font-size: 32px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+
+            #conteoCursosContainer .curso-card .curso-nivel {
+                font-size: 11px;
+                opacity: 0.8;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            /* Responsive para el grid de 2 columnas */
+            @media (max-width: 768px) {
+                .dashboard-cards {
+                    grid-template-columns: 1fr !important;
+                }
+                
+                /* En móvil, las tarjetas de información se apilan */
+                section#dashboard > div:last-child {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+
     </style>
 </head>
 <body>
@@ -956,124 +1008,89 @@
             </div>
 
                     <!-- DASHBOARD -->
-        <section id="dashboard" class="section active">
-            <div class="dashboard-cards">
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">Participantes Activos</div>
-                            <div class="card-value" id="dashParticipantes">0</div>
-                            <div class="card-subtitle">Inscritos en el curso</div>
+            <section id="dashboard" class="section active">
+                <!-- FILA 1: TARJETAS DE ESTADÍSTICAS PRINCIPALES -->
+                <div class="dashboard-cards">
+                    <!-- Participantes Activos -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Participantes Activos</div>
+                                <div class="card-value" id="dashParticipantes">0</div>
+                                <div class="card-subtitle">Inscritos en el curso</div>
+                            </div>
+                            <div class="card-icon blue"></div>
                         </div>
-                        <div class="card-icon blue"></div>
                     </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">Horas Dictadas</div>
-                            <div class="card-value" id="dashHoras">0</div>
-                            <div class="card-subtitle">De <span id="dashHorasPlan">0</span> planificadas</div>
+                    
+                    <!-- Horas Dictadas -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Horas Dictadas</div>
+                                <div class="card-value" id="dashHoras">0</div>
+                                <div class="card-subtitle">De <span id="dashHorasPlan">0</span> planificadas</div>
+                            </div>
+                            <div class="card-icon green">⏱️</div>
                         </div>
-                        <div class="card-icon green">⏱️</div>
+                        <div class="progress-bar" style="margin-top: 15px;">
+                            <div id="progressHoras" class="progress-fill" style="width: 0%"></div>
+                        </div>
                     </div>
-                </div>
-                <!-- Después de las 3 tarjetas principales -->
-                <div class="card">
-                <h3>📖 Información del Curso</h3>
-                <p id="dashCursoNombre" style="font-size: 18px; font-weight: bold; margin: 10px 0;">-</p>
-                
-                <!-- ✅ NUEVO: Mostrar fechas y estado -->
-                <div style="display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap;">
-                    <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px; flex: 1;">
-                        <div style="font-size: 12px; color: #7f8c8d;">📅 Fecha de Inicio</div>
-                        <div style="font-weight: bold; color: #2c3e50;" id="dashFechaInicio">-</div>
-                    </div>
-                    <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px; flex: 1;">
-                        <div style="font-size: 12px; color: #7f8c8d;">📅 Fecha de Fin</div>
-                        <div style="font-weight: bold; color: #2c3e50;" id="dashFechaFin">-</div>
-                    </div>
-                    <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px; flex: 1;">
-                        <div style="font-size: 12px; color: #7f8c8d;">🟢 Estado</div>
-                        <div style="font-weight: bold; color: #27ae60;" id="dashEstadoCurso">-</div>
-                    </div>
-                </div>
-
-                <!-- NUEVO: CONTEO DE PARTICIPANTES POR CURSO -->
-                <div class="card" style="margin-top: 20px;">
-                    <h3 style="margin-bottom: 20px; color: #2c3e50;">📊 Total de Participantes por Curso</h3>
-                    <div id="conteoCursosContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <!-- Se llena dinámicamente -->
-                    </div>
-                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #ecf0f1; text-align: center;">
-                        <div style="font-size: 20px; font-weight: bold; color: #667eea;">
-                            Total General: <span id="totalGeneralParticipantes" style="font-size: 28px;">0</span> participantes
+                    
+                    <!-- Estado Financiero -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Estado Financiero</div>
+                                <div class="card-value" id="dashPorcentajeCobro">0%</div>
+                                <div class="card-subtitle" id="dashRecaudacionDetalle">Cargando...</div>
+                            </div>
+                            <div class="card-icon purple">💰</div>
+                        </div>
+                        <div class="progress-bar" style="margin-top: 15px;">
+                            <div id="dashProgressCobro" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div style="margin-top: 12px; font-size: 12px; color: #7f8c8d; display: flex; justify-content: space-between;">
+                            <span>Valor curso: <strong id="dashValorCurso" style="color: #2c3e50;">$0</strong></span>
+                            <span>Recaudado: <strong id="dashRecaudadoTotal" style="color: #2c3e50;">$0</strong></span>
                         </div>
                     </div>
                 </div>
                 
-                <p><strong>Materias:</strong> Teoría (Seguridad), Teoría, Práctica</p>
-            </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">Estado Financiero</div>
-                            <div class="card-value" id="dashPorcentajeCobro">0%</div>
-                            <div class="card-subtitle" id="dashRecaudacionDetalle">Cargando...</div>
+                <!-- FILA 2: INFORMACIÓN DEL CURSO + CONTEO GLOBAL -->
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 20px;">
+                    <!-- Información del Curso (compacta) -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 15px; color: #2c3e50; font-size: 18px;">📖 Información del Curso</h3>
+                        <p id="dashCursoNombre" style="font-size: 16px; font-weight: bold; margin: 10px 0; color: #667eea;">-</p>
+                        <div style="margin: 15px 0; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 5px;">📅 Período</div>
+                            <div style="font-size: 14px; font-weight: 600; color: #2c3e50;">
+                                <span id="dashFechaInicio">-</span> → <span id="dashFechaFin">-</span>
+                            </div>
                         </div>
-                        <div class="card-icon purple">💰</div>
+                        <div style="margin: 15px 0; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 5px;">🟢 Estado</div>
+                            <div style="font-size: 14px; font-weight: 600; color: #27ae60;" id="dashEstadoCurso">-</div>
+                        </div>
+                        <p style="margin-top: 15px; font-size: 13px; color: #7f8c8d;">
+                            <strong>Materias:</strong> Teoría (Seguridad), Teoría, Práctica
+                        </p>
                     </div>
-                    <div class="progress-bar" style="margin-top: 15px;">
-                        <div id="dashProgressCobro" class="progress-fill" style="width: 0%"></div>
+                    
+                    <!-- Total de Participantes por Curso -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 20px; color: #2c3e50; font-size: 18px;">📊 Total de Participantes por Curso</h3>
+                        <div id="conteoCursosContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #ecf0f1; text-align: center;">
+                            <div style="font-size: 16px; font-weight: bold; color: #667eea;">
+                                Total General: <span id="totalGeneralParticipantes" style="font-size: 24px;">0</span> participantes
+                            </div>
+                        </div>
                     </div>
-                    <div style="margin-top: 12px; font-size: 12px; color: #7f8c8d; display: flex; justify-content: space-between;">
-                        <span>Valor curso: <strong id="dashValorCurso" style="color: #2c3e50;">$0</strong></span>
-                        <span>Recaudado: <strong id="dashRecaudadoTotal" style="color: #2c3e50;">$0</strong></span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- NUEVO: CONTEO DE ALUMNOS POR CURSO -->
-            <div class="card" style="margin-top: 20px;">
-                <h3 style="margin-bottom: 20px; color: #2c3e50;">📊 Total de Participantes por Curso</h3>
-                <div id="conteoCursosContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                    <!-- Se llena dinámicamente -->
-                </div>
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #ecf0f1; text-align: center;">
-                    <div style="font-size: 20px; font-weight: bold; color: #667eea;">
-                        Total General: <span id="totalGeneralParticipantes" style="font-size: 28px;">0</span> participantes
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Información del Curso (existente) -->
-            <div class="card">
-                <h3>📖 Información del Curso</h3>
-                <p id="dashCursoNombre" style="font-size: 18px; font-weight: bold; margin: 10px 0;">-</p>
-                <p><strong>Materias:</strong> Teoría (Seguridad), Teoría, Práctica</p>
-            </div>
-        </section>
-            <!-- PARTICIPANTES -->
-            <section id="participantes" class="section">
-                <div class="section-header">
-                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                        <h3 class="section-title">Lista de Participantes</h3>
-                        <span id="contadorParticipantes" class="badge" style="background: #667eea; color: white; font-size: 14px; padding: 6px 14px;">0</span>
-                    </div>
-                    <button class="btn-primary" onclick="abrirModalParticipante()">+ Agregar Participante</button>
-                </div>
-                <div id="mensajeSinParticipantes" class="hidden" style="text-align: center; padding: 40px 20px; background: #f8f9fa; border-radius: 12px; margin-bottom: 20px;">
-                    <p style="color: #7f8c8d; font-size: 16px; font-weight: 600;">No hay participantes registrados en este curso.</p>
-                </div>
-                <div class="table-container" id="contenedorTablaParticipantes">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>C.I.</th><th>Nombre</th><th>Edad</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Saldo / Pagos</th><th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaParticipantes"></tbody>
-                    </table>
                 </div>
             </section>
 
@@ -2190,84 +2207,69 @@ function actualizarVistaAdmin() {
         // FUNCIÓN: Cargar conteo de participantes por curso
         // ==========================================
         async function cargarConteoParticipantesPorCurso() {
-            const container = document.getElementById('conteoCursosContainer');
-            const totalGeneralEl = document.getElementById('totalGeneralParticipantes');
+        const container = document.getElementById('conteoCursosContainer');
+        const totalGeneralEl = document.getElementById('totalGeneralParticipantes');
+        
+        if (!container || !totalGeneralEl) return;
+        
+        try {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">Cargando...</div>';
             
-            if (!container || !totalGeneralEl) return;
+            let totalGeneral = 0;
+            const cursosConDatos = [];
             
-            try {
-                container.innerHTML = '<div style="text-align: center; padding: 20px;"> Cargando...</div>';
-                
-                let totalGeneral = 0;
-                const cursosConDatos = [];
-                
-                // Obtener datos de todos los cursos en paralelo
-                const promesas = cursosDisponibles.map(async (curso) => {
-                    try {
-                        const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(curso.id)}&puedeVerRecaudacion=NO&rolUsuario=PROFESOR`);
-                        const stats = await response.json();
-                        const cantidad = stats.participantes || 0;
-                        
-                        return {
-                            nombre: curso.nombre,
-                            nivel: curso.nivel,
-                            cantidad: cantidad,
-                            id: curso.id
-                        };
-                    } catch (e) {
-                        console.error(`Error cargando stats de ${curso.nombre}:`, e);
-                        return null;
-                    }
-                });
-                
-                const resultados = await Promise.all(promesas);
-                
-                // Filtrar resultados válidos
-                resultados.forEach(curso => {
-                    if (curso) {
-                        cursosConDatos.push(curso);
-                        totalGeneral += curso.cantidad;
-                    }
-                });
-                
-                // Actualizar total general
-                totalGeneralEl.textContent = totalGeneral;
-                
-                // Renderizar tarjetas
-                if (cursosConDatos.length === 0) {
-                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">No hay cursos disponibles</div>';
-                    return;
+            // Obtener datos de todos los cursos en paralelo
+            const promesas = cursosDisponibles.map(async (curso) => {
+                try {
+                    const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(curso.id)}&puedeVerRecaudacion=NO&rolUsuario=PROFESOR`);
+                    const stats = await response.json();
+                    const cantidad = stats.participantes || 0;
+                    
+                    return {
+                        nombre: curso.nombre,
+                        nivel: curso.nivel,
+                        cantidad: cantidad,
+                        id: curso.id
+                    };
+                } catch (e) {
+                    return null;
                 }
-                
-                container.innerHTML = '';
-                cursosConDatos.forEach(curso => {
-                    const card = document.createElement('div');
-                    card.style.cssText = `
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white;
-                        padding: 20px;
-                        border-radius: 12px;
-                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-                        transition: transform 0.3s;
-                    `;
-                    card.onmouseover = () => card.style.transform = 'translateY(-5px)';
-                    card.onmouseout = () => card.style.transform = 'translateY(0)';
-                    
-                    card.innerHTML = `
-                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">${curso.nombre}</div>
-                        <div style="font-size: 32px; font-weight: bold;">${curso.cantidad}</div>
-                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">participantes</div>
-                        <div style="font-size: 11px; opacity: 0.7; margin-top: 8px;">Nivel: ${curso.nivel}</div>
-                    `;
-                    
-                    container.appendChild(card);
-                });
-                
-            } catch (error) {
-                console.error('❌ Error cargando conteo:', error);
-                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #e74c3c;">Error al cargar</div>';
+            });
+            
+            const resultados = await Promise.all(promesas);
+            
+            resultados.forEach(curso => {
+                if (curso) {
+                    cursosConDatos.push(curso);
+                    totalGeneral += curso.cantidad;
+                }
+            });
+            
+            totalGeneralEl.textContent = totalGeneral;
+            container.innerHTML = '';
+            
+            if (cursosConDatos.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">No hay cursos disponibles</div>';
+                return;
             }
+            
+            // Crear tarjetas con diseño mejorado
+            cursosConDatos.forEach(curso => {
+                const card = document.createElement('div');
+                card.className = 'curso-card';
+                card.innerHTML = `
+                    <div class="curso-nombre">${curso.nombre}</div>
+                    <div class="curso-cantidad">${curso.cantidad}</div>
+                    <div class="curso-nivel">Nivel: ${curso.nivel}</div>
+                `;
+                container.appendChild(card);
+            });
+            
+        } catch (error) {
+            console.error('❌ Error cargando conteo:', error);
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #e74c3c;">Error al cargar</div>';
         }
+    }
 
         function abrirModalAgregarNota(cedula, nombre) {
             document.getElementById('notaNombre').textContent = nombre;
