@@ -979,28 +979,28 @@
                     </div>
                 </div>
                 <!-- Después de las 3 tarjetas principales -->
-                <div class="card" style="margin-top: 20px; border-left: 4px solid #667eea;">
-                    <h3> Información del Curso</h3>
-                    <p id="dashCursoNombre" style="font-size: 18px; font-weight: bold; margin: 10px 0;">-</p>
-                    
-                    <!-- ✅ NUEVO: Mostrar fechas del curso -->
-                    <div style="display: flex; gap: 20px; margin: 15px 0; flex-wrap: wrap;">
-                        <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px;">
-                            <div style="font-size: 12px; color: #7f8c8d;">📅 Fecha de Inicio</div>
-                            <div style="font-weight: bold; color: #2c3e50;" id="dashFechaInicio">-</div>
-                        </div>
-                        <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px;">
-                            <div style="font-size: 12px; color: #7f8c8d;"> Fecha de Fin</div>
-                            <div style="font-weight: bold; color: #2c3e50;" id="dashFechaFin">-</div>
-                        </div>
-                        <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px;">
-                            <div style="font-size: 12px; color: #7f8c8d;">🟢 Estado</div>
-                            <div style="font-weight: bold; color: #27ae60;" id="dashEstadoCurso">-</div>
-                        </div>
+                <div class="card">
+                <h3>📖 Información del Curso</h3>
+                <p id="dashCursoNombre" style="font-size: 18px; font-weight: bold; margin: 10px 0;">-</p>
+                
+                <!-- ✅ NUEVO: Mostrar fechas y estado -->
+                <div style="display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap;">
+                    <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px; flex: 1;">
+                        <div style="font-size: 12px; color: #7f8c8d;">📅 Fecha de Inicio</div>
+                        <div style="font-weight: bold; color: #2c3e50;" id="dashFechaInicio">-</div>
                     </div>
-                    
-                    <p><strong>Materias:</strong> Teoría (Seguridad), Teoría, Práctica</p>
+                    <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px; flex: 1;">
+                        <div style="font-size: 12px; color: #7f8c8d;">📅 Fecha de Fin</div>
+                        <div style="font-weight: bold; color: #2c3e50;" id="dashFechaFin">-</div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 8px; flex: 1;">
+                        <div style="font-size: 12px; color: #7f8c8d;">🟢 Estado</div>
+                        <div style="font-weight: bold; color: #27ae60;" id="dashEstadoCurso">-</div>
+                    </div>
                 </div>
+                
+                <p><strong>Materias:</strong> Teoría (Seguridad), Teoría, Práctica</p>
+            </div>
                 <div class="card">
                     <div class="card-header">
                         <div>
@@ -1410,104 +1410,130 @@
             const option = document.createElement('option');
             option.value = curso.id;
             
-            // ✅ NUEVO: Mostrar estado del curso
-            let estadoTexto = '';
+            // ✅ NUEVO: Mostrar estado con emoji
+            let estadoEmoji = '';
             if (curso.estado === 'Activo') {
-                estadoTexto = ' ✅';
+                estadoEmoji = ' ✅';
             } else if (curso.estado === 'Por Iniciar') {
-                estadoTexto = ' 🔜';
+                estadoEmoji = ' ';
             } else {
-                estadoTexto = ' 🔒';
+                estadoEmoji = ' 🔒';
             }
+            
+            option.textContent = `${curso.nombre} (${curso.nivel})${estadoEmoji}`;
+            
+            // Deshabilitar cursos que no estén activos
+            if (curso.estado !== 'Activo') {
+                option.disabled = true;
+            }
+            
+            selector.appendChild(option);
+        });
+    }
             
             option.textContent = `${curso.nombre} (${curso.nivel})${estadoTexto}`;
             option.disabled = curso.estado !== 'Activo'; // Deshabilitar cursos no activos
             
             selector.appendChild(option);
-        });
-    }
 
         // ==========================================
         // CARGA DE DATOS DEL CURSO (CORREGIDA)
         // ==========================================
         async function cargarCurso() {
-            const cursoId = document.getElementById('courseSelector').value;
-            if (!cursoId) return;
-            
-            cursoActual = cursoId;
-            const curso = cursosDisponibles.find(c => c.id == cursoId);
-            
-            const elCursoNombre = document.getElementById('dashCursoNombre');
-            if (elCursoNombre) elCursoNombre.textContent = curso.nombre;
-            
-            const elHorasPlan = document.getElementById('dashHorasPlan');
-            if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
-            
-            const badge = document.getElementById('courseBadge');
-            if (badge) {
-                badge.textContent = curso.nivel;
-                badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
+    const cursoId = document.getElementById('courseSelector').value;
+    if (!cursoId) return;
+    
+    cursoActual = cursoId;
+    const curso = cursosDisponibles.find(c => c.id == cursoId);
+    
+    const elCursoNombre = document.getElementById('dashCursoNombre');
+    if (elCursoNombre) elCursoNombre.textContent = curso.nombre;
+    
+    const elHorasPlan = document.getElementById('dashHorasPlan');
+    if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
+    
+    const badge = document.getElementById('courseBadge');
+    if (badge) {
+        badge.textContent = curso.nivel;
+        badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
+    }
+    
+    // ✅ NUEVO: Actualizar fechas y estado en el dashboard
+    const elFechaInicio = document.getElementById('dashFechaInicio');
+    const elFechaFin = document.getElementById('dashFechaFin');
+    const elEstadoCurso = document.getElementById('dashEstadoCurso');
+    
+    if (elFechaInicio) elFechaInicio.textContent = curso.fechaInicio || '-';
+    if (elFechaFin) elFechaFin.textContent = curso.fechaFin || '-';
+    if (elEstadoCurso) {
+        elEstadoCurso.textContent = curso.estado || 'Activo';
+        if (curso.estado === 'Activo') {
+            elEstadoCurso.style.color = '#27ae60'; // Verde
+        } else if (curso.estado === 'Por Iniciar') {
+            elEstadoCurso.style.color = '#f39c12'; // Naranja
+        } else {
+            elEstadoCurso.style.color = '#e74c3c'; // Rojo
+        }
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion)}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
+        const stats = await response.json();
+        
+        const elParticipantes = document.getElementById('dashParticipantes');
+        if (elParticipantes) elParticipantes.textContent = stats.participantes || 0;
+        
+        const elHoras = document.getElementById('dashHoras');
+        if (elHoras) elHoras.textContent = stats.horas || 0;
+        
+        const valorCurso = Number(curso.valorCurso) || 0;
+        const participantesActivos = Number(stats.participantes) || 0;
+        const recaudacion = (stats.recaudacion !== null && stats.recaudacion !== undefined) ? Number(stats.recaudacion) : 0;
+        const tienePermiso = (String(curso.verRecaudacion).trim().toUpperCase() === 'SI') || (rolUsuario === 'ADMIN');
+        
+        const elPorcentaje = document.getElementById('dashPorcentajeCobro');
+        const elDetalle = document.getElementById('dashRecaudacionDetalle');
+        const elProgress = document.getElementById('dashProgressCobro');
+        const elValorCurso = document.getElementById('dashValorCurso');
+        const elRecaudado = document.getElementById('dashRecaudadoTotal');
+        
+        if (!tienePermiso) {
+            if (elPorcentaje) elPorcentaje.textContent = '🔒';
+            if (elDetalle) elDetalle.textContent = 'Sin permiso para ver finanzas';
+            if (elProgress) elProgress.style.width = '0%';
+            if (elValorCurso) elValorCurso.textContent = 'N/A';
+            if (elRecaudado) elRecaudado.textContent = 'N/A';
+        } else {
+            const recaudacionEsperada = valorCurso * participantesActivos;
+            let porcentajeCobro = 0;
+            if (recaudacionEsperada > 0) {
+                porcentajeCobro = (recaudacion / recaudacionEsperada) * 100;
             }
+            const porcentajeVisual = Math.min(porcentajeCobro, 100);
             
-            try {
-                const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion)}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
-                const stats = await response.json();
-                
-                const elParticipantes = document.getElementById('dashParticipantes');
-                if (elParticipantes) elParticipantes.textContent = stats.participantes || 0;
-                
-                const elHoras = document.getElementById('dashHoras');
-                if (elHoras) elHoras.textContent = stats.horas || 0;
-                
-                const valorCurso = Number(curso.valorCurso) || 0;
-                const participantesActivos = Number(stats.participantes) || 0;
-                const recaudacion = (stats.recaudacion !== null && stats.recaudacion !== undefined) ? Number(stats.recaudacion) : 0;
-                const tienePermiso = (String(curso.verRecaudacion).trim().toUpperCase() === 'SI') || (rolUsuario === 'ADMIN');
-                
-                const elPorcentaje = document.getElementById('dashPorcentajeCobro');
-                const elDetalle = document.getElementById('dashRecaudacionDetalle');
-                const elProgress = document.getElementById('dashProgressCobro');
-                const elValorCurso = document.getElementById('dashValorCurso');
-                const elRecaudado = document.getElementById('dashRecaudadoTotal');
-                
-                if (!tienePermiso) {
-                    if (elPorcentaje) elPorcentaje.textContent = '🔒';
-                    if (elDetalle) elDetalle.textContent = 'Sin permiso para ver finanzas';
-                    if (elProgress) elProgress.style.width = '0%';
-                    if (elValorCurso) elValorCurso.textContent = 'N/A';
-                    if (elRecaudado) elRecaudado.textContent = 'N/A';
-                } else {
-                    const recaudacionEsperada = valorCurso * participantesActivos;
-                    let porcentajeCobro = 0;
-                    if (recaudacionEsperada > 0) {
-                        porcentajeCobro = (recaudacion / recaudacionEsperada) * 100;
-                    }
-                    const porcentajeVisual = Math.min(porcentajeCobro, 100);
-                    
-                    if (elPorcentaje) elPorcentaje.textContent = porcentajeCobro.toFixed(1) + '%';
-                    if (elDetalle) elDetalle.textContent = `Recaudado $${recaudacion.toLocaleString()} de $${recaudacionEsperada.toLocaleString()}`;
-                    if (elProgress) elProgress.style.width = porcentajeVisual + '%';
-                    if (elValorCurso) elValorCurso.textContent = '$' + valorCurso.toLocaleString();
-                    if (elRecaudado) elRecaudado.textContent = '$' + recaudacion.toLocaleString();
-                    
-                    if (elProgress) {
-                        if (porcentajeCobro >= 90) elProgress.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
-                        else if (porcentajeCobro >= 50) elProgress.style.background = 'linear-gradient(90deg, #f39c12, #f1c40f)';
-                        else elProgress.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
-                    }
-                }
-                
-                // Carga diferida para no saturar
-                await cargarParticipantes(cursoId);
-                setTimeout(() => cargarPagos(cursoId), 100);
-                setTimeout(() => cargarHoras(cursoId), 200);
-                setTimeout(() => cargarCalificaciones(cursoId), 300);
-                setTimeout(() => cargarConteoParticipantesPorCurso(), 400); // ✅ NUEVO
-                
-            } catch (error) {
-                console.error('❌ Error cargando estadísticas:', error);
+            if (elPorcentaje) elPorcentaje.textContent = porcentajeCobro.toFixed(1) + '%';
+            if (elDetalle) elDetalle.textContent = `Recaudado $${recaudacion.toLocaleString()} de $${recaudacionEsperada.toLocaleString()}`;
+            if (elProgress) elProgress.style.width = porcentajeVisual + '%';
+            if (elValorCurso) elValorCurso.textContent = '$' + valorCurso.toLocaleString();
+            if (elRecaudado) elRecaudado.textContent = '$' + recaudacion.toLocaleString();
+            
+            if (elProgress) {
+                if (porcentajeCobro >= 90) elProgress.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
+                else if (porcentajeCobro >= 50) elProgress.style.background = 'linear-gradient(90deg, #f39c12, #f1c40f)';
+                else elProgress.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
             }
         }
+        
+        // Carga diferida para no saturar
+        await cargarParticipantes(cursoId);
+        setTimeout(() => cargarPagos(cursoId), 100);
+        setTimeout(() => cargarHoras(cursoId), 200);
+        setTimeout(() => cargarCalificaciones(cursoId), 300);
+        
+    } catch (error) {
+        console.error('❌ Error cargando estadísticas:', error);
+    }
+}
 
         // ==========================================
         // MÓDULO: PARTICIPANTES
