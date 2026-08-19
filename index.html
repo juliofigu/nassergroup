@@ -1094,6 +1094,30 @@
                 </div>
             </section>
 
+            <!-- PARTICIPANTES -->
+            <section id="participantes" class="section">
+                <div class="section-header">
+                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <h3 class="section-title">Lista de Participantes</h3>
+                        <span id="contadorParticipantes" class="badge" style="background: #667eea; color: white; font-size: 14px; padding: 6px 14px;">0</span>
+                    </div>
+                    <button class="btn-primary" onclick="abrirModalParticipante()">+ Agregar Participante</button>
+                </div>
+                <div id="mensajeSinParticipantes" class="hidden" style="text-align: center; padding: 40px 20px; background: #f8f9fa; border-radius: 12px; margin-bottom: 20px;">
+                    <p style="color: #7f8c8d; font-size: 16px; font-weight: 600;">No hay participantes registrados en este curso.</p>
+                </div>
+                <div class="table-container" id="contenedorTablaParticipantes">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>C.I.</th><th>Nombre</th><th>Edad</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Saldo / Pagos</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaParticipantes"></tbody>
+                    </table>
+                </div>
+            </section>
+
             <!-- PAGOS -->
             <section id="pagos" class="section">
                 <div class="section-header">
@@ -1470,48 +1494,91 @@
         // CARGA DE DATOS DEL CURSO (OPTIMIZADA)
         // ==========================================
         async function cargarCurso() {
-    const cursoId = document.getElementById('courseSelector').value;
-    if (!cursoId) return;
-    
-    cursoActual = cursoId;
-    const curso = cursosDisponibles.find(c => c.id == cursoId);
-    
-    // Actualizar UI básica
-    const elCursoNombre = document.getElementById('dashCursoNombre');
-    if (elCursoNombre) elCursoNombre.textContent = curso.nombre;
-    
-    const elHorasPlan = document.getElementById('dashHorasPlan');
-    if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
-    
-    const badge = document.getElementById('courseBadge');
-    if (badge) {
-        badge.textContent = curso.nivel;
-        badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion)}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
-        const stats = await response.json();
-        
-        // Actualizar dashboard con validaciones
-        const elParticipantes = document.getElementById('dashParticipantes');
-        if (elParticipantes) elParticipantes.textContent = stats.participantes || 0;
-        
-        const elHoras = document.getElementById('dashHoras');
-        if (elHoras) elHoras.textContent = stats.horas || 0;
-        
-        // ... resto del código de estadísticas ...
-        
-    } catch (error) {
-        console.error(' Error cargando estadísticas:', error);
-    }
-    
-    // ✅ Carga diferida con try/catch individual (más seguro que Promise.all)
-    try { await cargarParticipantes(cursoId); } catch(e) { console.error('Error participantes:', e); }
-    setTimeout(() => { try { cargarPagos(cursoId); } catch(e) {} }, 100);
-    setTimeout(() => { try { cargarHoras(cursoId); } catch(e) {} }, 200);
-    setTimeout(() => { try { cargarCalificaciones(cursoId); } catch(e) {} }, 300);
-}
+            const cursoId = document.getElementById('courseSelector').value;
+            if (!cursoId) return;
+            
+            cursoActual = cursoId;
+            const curso = cursosDisponibles.find(c => c.id == cursoId);
+            
+            // Actualizar UI básica inmediatamente
+            const elCursoNombre = document.getElementById('dashCursoNombre');
+            if (elCursoNombre) elCursoNombre.textContent = curso.nombre;
+            
+            const elHorasPlan = document.getElementById('dashHorasPlan');
+            if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
+            
+            const badge = document.getElementById('courseBadge');
+            if (badge) {
+                badge.textContent = curso.nivel;
+                badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
+            }
+            
+            try {
+                // ✅ OPTIMIZACIÓN: Obtener estadísticas primero (lo más importante)
+                const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion)}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
+                const stats = await response.json();
+                
+                // Actualizar dashboard
+                const elParticipantes = document.getElementById('dashParticipantes');
+                if (elParticipantes) elParticipantes.textContent = stats.participantes || 0;
+                
+                const elHoras = document.getElementById('dashHoras');
+                if (elHoras) elHoras.textContent = stats.horas || 0;
+                
+                // Estado financiero
+                const valorCurso = Number(curso.valorCurso) || 0;
+                const participantesActivos = Number(stats.participantes) || 0;
+                const recaudacion = (stats.recaudacion !== null && stats.recaudacion !== undefined) ? Number(stats.recaudacion) : 0;
+                const tienePermiso = (String(curso.verRecaudacion).trim().toUpperCase() === 'SI') || (rolUsuario === 'ADMIN');
+                
+                const elPorcentaje = document.getElementById('dashPorcentajeCobro');
+                const elDetalle = document.getElementById('dashRecaudacionDetalle');
+                const elProgress = document.getElementById('dashProgressCobro');
+                const elValorCurso = document.getElementById('dashValorCurso');
+                const elRecaudado = document.getElementById('dashRecaudadoTotal');
+                
+                if (!tienePermiso) {
+                    if (elPorcentaje) elPorcentaje.textContent = '🔒';
+                    if (elDetalle) elDetalle.textContent = 'Sin permiso para ver finanzas';
+                    if (elProgress) elProgress.style.width = '0%';
+                    if (elValorCurso) elValorCurso.textContent = 'N/A';
+                    if (elRecaudado) elRecaudado.textContent = 'N/A';
+                } else {
+                    const recaudacionEsperada = valorCurso * participantesActivos;
+                    let porcentajeCobro = 0;
+                    if (recaudacionEsperada > 0) {
+                        porcentajeCobro = (recaudacion / recaudacionEsperada) * 100;
+                    }
+                    const porcentajeVisual = Math.min(porcentajeCobro, 100);
+                    
+                    if (elPorcentaje) elPorcentaje.textContent = porcentajeCobro.toFixed(1) + '%';
+                    if (elDetalle) elDetalle.textContent = `Recaudado $${recaudacion.toLocaleString()} de $${recaudacionEsperada.toLocaleString()}`;
+                    if (elProgress) elProgress.style.width = porcentajeVisual + '%';
+                    if (elValorCurso) elValorCurso.textContent = '$' + valorCurso.toLocaleString();
+                    if (elRecaudado) elRecaudado.textContent = '$' + recaudacion.toLocaleString();
+                    
+                    if (elProgress) {
+                        if (porcentajeCobro >= 90) elProgress.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
+                        else if (porcentajeCobro >= 50) elProgress.style.background = 'linear-gradient(90deg, #f39c12, #f1c40f)';
+                        else elProgress.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+                    }
+                }
+                
+                // ✅ OPTIMIZACIÓN: Cargar módulos en paralelo (no secuencial)
+                await Promise.all([
+                    cargarParticipantes(cursoId),
+                    cargarPagos(cursoId),
+                    cargarHoras(cursoId),
+                    cargarCalificaciones(cursoId)
+                ]);
+                
+                // Cargar estadísticas del dashboard (conteo por curso)
+                cargarConteoParticipantesPorCurso();
+                
+            } catch (error) {
+                console.error('❌ Error cargando estadísticas:', error);
+            }
+        }
 
         // ==========================================
         // MÓDULO: PARTICIPANTES
