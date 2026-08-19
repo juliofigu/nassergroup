@@ -2940,6 +2940,25 @@ function actualizarVistaAdmin() {
         document.getElementById('modalPago').classList.remove('hidden');
     }
 
+    // ==========================================
+    // FUNCIÓN: Abrir modal de pago a profesor
+    // ==========================================
+    function abrirModalPagoProfesor(profesor, materia, curso, horas) {
+        document.getElementById('pagoProfNombre').value = profesor;
+        document.getElementById('pagoProfMateria').value = materia;
+        document.getElementById('pagoProfMateria').dataset.curso = curso; // Guardamos el curso temporalmente
+        
+        // ✅ NUEVO: Mostrar horas pendientes y pre-llenar el campo de abono
+        document.getElementById('pagoProfHorasPendientes').value = horas;
+        document.getElementById('pagoProfHoras').value = horas;
+        
+        document.getElementById('pagoProfFecha').valueAsDate = new Date();
+        document.getElementById('pagoProfMonto').value = '';
+        document.getElementById('pagoProfPeriodo').value = '';
+        
+        document.getElementById('modalPagoProfesor').classList.remove('hidden');
+    }
+
         function cerrarModalPagoProfesor() {
             document.getElementById('modalPagoProfesor').classList.add('hidden');
             document.getElementById('formPagoProfesor').reset();
