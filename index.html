@@ -1484,11 +1484,6 @@
         selector.appendChild(option);
     });
 }
-            
-            option.textContent = `${curso.nombre} (${curso.nivel})${estadoTexto}`;
-            option.disabled = curso.estado !== 'Activo'; // Deshabilitar cursos no activos
-            
-            selector.appendChild(option);
 
         // ==========================================
         // CARGA DE DATOS DEL CURSO (OPTIMIZADA)
@@ -1849,6 +1844,25 @@
             }
         }
 
+        async function cargarParticipantesEnDropdown() {
+        const select = document.getElementById('pagoParticipante');
+        select.innerHTML = '<option value="">Selecciona un participante...</option>';
+        try {
+            const response = await fetch(`${API_URL}?action=getParticipantes&cursoId=${encodeURIComponent(cursoActual)}`);
+            const data = await response.json();
+            if (data.participantes) {
+                data.participantes.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.cedula;
+                    option.textContent = `${p.nombre} (C.I.: ${p.cedula})`;
+                    select.appendChild(option);
+                });
+            }
+        } catch (error) { 
+            console.error('Error cargando participantes en dropdown:', error); 
+        }
+    }
+
         function abrirModalPago() {
             if (!cursoActual) { alert('⚠️ Primero selecciona un curso.'); return; }
             document.getElementById('pagoFecha').valueAsDate = new Date();
@@ -1938,108 +1952,7 @@
         }
     }
 
-    // ==========================================
-    // FUNCIÓN: Cargar participantes en dropdown (MODIFICADA)
-    // ==========================================
-    async function cargarParticipantes(cursoId) {
-    try {
-        // ✅ BLINDAJE: Verificar que los elementos existan antes de usarlos
-        const contadorEl = document.getElementById('contadorParticipantes');
-        const mensajeVacio = document.getElementById('mensajeSinParticipantes');
-        const contenedorTabla = document.getElementById('contenedorTablaParticipantes');
-        const tbody = document.getElementById('tablaParticipantes');
-        
-        // Si no existe el tbody, salir silenciosamente (la sección puede estar oculta)
-        if (!tbody) {
-            console.warn('⚠️ Tabla de participantes no encontrada. Sección puede estar oculta.');
-            return;
-        }
-        
-        console.log("🔍 Cargando participantes para curso:", cursoId);
-        const response = await fetch(`${API_URL}?action=getParticipantesConSaldo&cursoId=${encodeURIComponent(cursoId)}`);
-        const data = await response.json();
-        console.log("✅ Datos recibidos:", data);
-        
-        if (data.error) {
-            console.error("❌ Error del servidor:", data.error);
-            alert("Error del servidor: " + data.error);
-            return;
-        }
-        
-        tbody.innerHTML = '';
-        const total = data.participantes ? data.participantes.length : 0;
-        
-        if (contadorEl) contadorEl.textContent = total;
-        
-        if (total === 0) {
-            if (mensajeVacio) mensajeVacio.classList.remove('hidden');
-            if (contenedorTabla) contenedorTabla.classList.add('hidden');
-        } else {
-            if (mensajeVacio) mensajeVacio.classList.add('hidden');
-            if (contenedorTabla) contenedorTabla.classList.remove('hidden');
-            
-            data.participantes.forEach(p => {
-                const saldoPendiente = p.valorCurso - p.totalPagado;
-                
-                let estadoBadgeClass = 'badge-success';
-                let btnTexto = 'Desactivar';
-                let btnClass = 'btn-warning';
-                
-                if (p.estado === 'Inactivo') {
-                    estadoBadgeClass = 'badge-danger';
-                    btnTexto = 'Activar';
-                    btnClass = 'btn-success';
-                } else if (p.estado === 'Graduado') {
-                    estadoBadgeClass = 'badge-info';
-                    btnTexto = 'Reactivar';
-                    btnClass = 'btn-primary';
-                }
-                
-                let saldoBadgeClass = 'badge-success';
-                let saldoTexto = 'Cancelado';
-                
-                if (saldoPendiente > 0) {
-                    saldoBadgeClass = 'badge-danger';
-                    saldoTexto = `Pendiente: $${saldoPendiente.toFixed(2)}`;
-                } else if (saldoPendiente < 0) {
-                    saldoBadgeClass = 'badge-warning';
-                    saldoTexto = 'Sobrepagó';
-                }
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${p.cedula}</td>
-                        <td>${p.nombre}</td>
-                        <td>${p.edad}</td>
-                        <td>${p.correo}</td>
-                        <td>${p.telefono}</td>
-                        <td><span class="badge ${estadoBadgeClass}">${p.estado}</span></td>
-                        <td style="text-align: center;">
-                            <span class="badge ${saldoBadgeClass}" style="font-size: 12px; padding: 5px 10px;">
-                                ${saldoTexto}
-                            </span>
-                            <div style="font-size: 11px; color: #7f8c8d; margin-top: 3px;">
-                                Valor: $${p.valorCurso} | Pagado: $${p.totalPagado.toFixed(2)}
-                            </div>
-                        </td>
-                        <td>
-                            <button class="${btnClass}" onclick="cambiarEstadoParticipante('${p.id}', '${p.nombre}', '${p.estado}')" style="margin-right: 5px; padding: 5px 10px; font-size: 11px;">
-                                🔄 ${btnTexto}
-                            </button>
-                            <button class="btn-danger" onclick="eliminarParticipante('${p.id}', '${p.nombre}')" style="padding: 5px 10px; font-size: 11px;">
-                                🗑️ Eliminar
-                            </button>
-                        </td>
-                    </tr>`;
-            });
-        }
-    } catch (error) {
-        console.error('❌ Error al cargar participantes:', error);
-        // No mostrar alert para no interrumpir la experiencia
-    }
-}
-
-        function cerrarModalPago() {
+            function cerrarModalPago() {
             document.getElementById('modalPago').classList.add('hidden');
             document.getElementById('formPago').reset();
         }
