@@ -1486,7 +1486,7 @@
 }
 
         // ==========================================
-        // CARGA DE DATOS DEL CURSO (OPTIMIZADA)
+        // CARGA DE DATOS DEL CURSO (OPTIMIZADA CON FECHAS)
         // ==========================================
         async function cargarCurso() {
             const cursoId = document.getElementById('courseSelector').value;
@@ -1506,6 +1506,24 @@
             if (badge) {
                 badge.textContent = curso.nivel;
                 badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
+            }
+            
+            // ✅ NUEVO: Actualizar fechas y estado
+            const elFechaInicio = document.getElementById('dashFechaInicio');
+            const elFechaFin = document.getElementById('dashFechaFin');
+            const elEstadoCurso = document.getElementById('dashEstadoCurso');
+            
+            if (elFechaInicio) elFechaInicio.textContent = curso.fechaInicio || '-';
+            if (elFechaFin) elFechaFin.textContent = curso.fechaFin || '-';
+            if (elEstadoCurso) {
+                elEstadoCurso.textContent = curso.estado || 'Activo';
+                if (curso.estado === 'Activo') {
+                    elEstadoCurso.style.color = '#27ae60'; // Verde
+                } else if (curso.estado === 'Por Iniciar') {
+                    elEstadoCurso.style.color = '#f39c12'; // Naranja
+                } else {
+                    elEstadoCurso.style.color = '#e74c3c'; // Rojo
+                }
             }
             
             try {
@@ -1533,7 +1551,7 @@
                 const elRecaudado = document.getElementById('dashRecaudadoTotal');
                 
                 if (!tienePermiso) {
-                    if (elPorcentaje) elPorcentaje.textContent = '🔒';
+                    if (elPorcentaje) elPorcentaje.textContent = '';
                     if (elDetalle) elDetalle.textContent = 'Sin permiso para ver finanzas';
                     if (elProgress) elProgress.style.width = '0%';
                     if (elValorCurso) elValorCurso.textContent = 'N/A';
@@ -2209,73 +2227,82 @@ function actualizarVistaAdmin() {
 
 
         // ==========================================
-        // FUNCIÓN: Cargar conteo de participantes por curso
+        // FUNCIÓN: Cargar conteo de participantes por curso (AGRUPADO POR NOMBRE)
         // ==========================================
         async function cargarConteoParticipantesPorCurso() {
-        const container = document.getElementById('conteoCursosContainer');
-        const totalGeneralEl = document.getElementById('totalGeneralParticipantes');
-        
-        if (!container || !totalGeneralEl) return;
-        
-        try {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">Cargando...</div>';
+            const container = document.getElementById('conteoCursosContainer');
+            const totalGeneralEl = document.getElementById('totalGeneralParticipantes');
             
-            let totalGeneral = 0;
-            const cursosConDatos = [];
+            if (!container || !totalGeneralEl) return;
             
-            // Obtener datos de todos los cursos en paralelo
-            const promesas = cursosDisponibles.map(async (curso) => {
-                try {
-                    const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(curso.id)}&puedeVerRecaudacion=NO&rolUsuario=PROFESOR`);
-                    const stats = await response.json();
-                    const cantidad = stats.participantes || 0;
-                    
-                    return {
-                        nombre: curso.nombre,
-                        nivel: curso.nivel,
-                        cantidad: cantidad,
-                        id: curso.id
-                    };
-                } catch (e) {
-                    return null;
+            try {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">Cargando...</div>';
+                
+                let totalGeneral = 0;
+                const cursosAgrupados = {}; // Agrupar por nombre de curso
+                
+                // Obtener datos de todos los cursos en paralelo
+                const promesas = cursosDisponibles.map(async (curso) => {
+                    try {
+                        const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(curso.id)}&puedeVerRecaudacion=NO&rolUsuario=PROFESOR`);
+                        const stats = await response.json();
+                        const cantidad = stats.participantes || 0;
+                        
+                        return {
+                            nombre: curso.nombre,
+                            nivel: curso.nivel,
+                            cantidad: cantidad,
+                            id: curso.id
+                        };
+                    } catch (e) {
+                        return null;
+                    }
+                });
+                
+                const resultados = await Promise.all(promesas);
+                
+                // AGRUPAR cursos por nombre
+                resultados.forEach(curso => {
+                    if (curso) {
+                        if (!cursosAgrupados[curso.nombre]) {
+                            cursosAgrupados[curso.nombre] = {
+                                nombre: curso.nombre,
+                                nivel: curso.nivel,
+                                cantidad: 0
+                            };
+                        }
+                        cursosAgrupados[curso.nombre].cantidad += curso.cantidad;
+                        totalGeneral += curso.cantidad;
+                    }
+                });
+                
+                totalGeneralEl.textContent = totalGeneral;
+                container.innerHTML = '';
+                
+                const cursosArray = Object.values(cursosAgrupados);
+                
+                if (cursosArray.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">No hay cursos disponibles</div>';
+                    return;
                 }
-            });
-            
-            const resultados = await Promise.all(promesas);
-            
-            resultados.forEach(curso => {
-                if (curso) {
-                    cursosConDatos.push(curso);
-                    totalGeneral += curso.cantidad;
-                }
-            });
-            
-            totalGeneralEl.textContent = totalGeneral;
-            container.innerHTML = '';
-            
-            if (cursosConDatos.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #7f8c8d;">No hay cursos disponibles</div>';
-                return;
+                
+                // Crear tarjetas con diseño mejorado
+                cursosArray.forEach(curso => {
+                    const card = document.createElement('div');
+                    card.className = 'curso-card';
+                    card.innerHTML = `
+                        <div class="curso-nombre">${curso.nombre}</div>
+                        <div class="curso-cantidad">${curso.cantidad}</div>
+                        <div class="curso-nivel">Nivel: ${curso.nivel}</div>
+                    `;
+                    container.appendChild(card);
+                });
+                
+            } catch (error) {
+                console.error('❌ Error cargando conteo:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #e74c3c;">Error al cargar</div>';
             }
-            
-            // Crear tarjetas con diseño mejorado
-            cursosConDatos.forEach(curso => {
-                const card = document.createElement('div');
-                card.className = 'curso-card';
-                card.innerHTML = `
-                    <div class="curso-nombre">${curso.nombre}</div>
-                    <div class="curso-cantidad">${curso.cantidad}</div>
-                    <div class="curso-nivel">Nivel: ${curso.nivel}</div>
-                `;
-                container.appendChild(card);
-            });
-            
-        } catch (error) {
-            console.error('❌ Error cargando conteo:', error);
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #e74c3c;">Error al cargar</div>';
         }
-    }
-
         function abrirModalAgregarNota(cedula, nombre) {
             document.getElementById('notaNombre').textContent = nombre;
             document.getElementById('notaCedula').textContent = cedula;
