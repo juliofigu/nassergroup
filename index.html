@@ -1528,8 +1528,11 @@
             
             try {
                 // ✅ OPTIMIZACIÓN: Obtener estadísticas primero (lo más importante)
-                const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion)}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
+                const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion || 'NO')}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
                 const stats = await response.json();
+
+                // ✅ NUEVO: Ver en consola qué está devolviendo el servidor
+                console.log("📊 Estadísticas recibidas del backend:", stats);
                 
                 // Actualizar dashboard
                 const elParticipantes = document.getElementById('dashParticipantes');
