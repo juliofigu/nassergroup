@@ -1489,112 +1489,117 @@
         // CARGA DE DATOS DEL CURSO (OPTIMIZADA CON FECHAS)
         // ==========================================
         async function cargarCurso() {
-            const cursoId = document.getElementById('courseSelector').value;
-            if (!cursoId) return;
-            
-            cursoActual = cursoId;
-            const curso = cursosDisponibles.find(c => c.id == cursoId);
-            
-            // Actualizar UI básica inmediatamente
-            const elCursoNombre = document.getElementById('dashCursoNombre');
-            if (elCursoNombre) elCursoNombre.textContent = curso.nombre;
-            
-            const elHorasPlan = document.getElementById('dashHorasPlan');
-            if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
-            
-            const badge = document.getElementById('courseBadge');
-            if (badge) {
-                badge.textContent = curso.nivel;
-                badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
-            }
-            
-            // ✅ NUEVO: Actualizar fechas y estado
-            const elFechaInicio = document.getElementById('dashFechaInicio');
-            const elFechaFin = document.getElementById('dashFechaFin');
-            const elEstadoCurso = document.getElementById('dashEstadoCurso');
-            
-            if (elFechaInicio) elFechaInicio.textContent = curso.fechaInicio || '-';
-            if (elFechaFin) elFechaFin.textContent = curso.fechaFin || '-';
-            if (elEstadoCurso) {
-                elEstadoCurso.textContent = curso.estado || 'Activo';
-                if (curso.estado === 'Activo') {
-                    elEstadoCurso.style.color = '#27ae60'; // Verde
-                } else if (curso.estado === 'Por Iniciar') {
-                    elEstadoCurso.style.color = '#f39c12'; // Naranja
-                } else {
-                    elEstadoCurso.style.color = '#e74c3c'; // Rojo
-                }
-            }
-            
-            try {
-                // ✅ OPTIMIZACIÓN: Obtener estadísticas primero (lo más importante)
-                const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion || 'NO')}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
-                const stats = await response.json();
-
-                // ✅ NUEVO: Ver en consola qué está devolviendo el servidor
-                console.log("📊 Estadísticas recibidas del backend:", stats);
-                
-                // Actualizar dashboard
-                const elParticipantes = document.getElementById('dashParticipantes');
-                if (elParticipantes) elParticipantes.textContent = stats.participantes || 0;
-                
-                const elHoras = document.getElementById('dashHoras');
-                if (elHoras) elHoras.textContent = stats.horas || 0;
-                
-                // Estado financiero
-                const valorCurso = Number(curso.valorCurso) || 0;
-                const participantesActivos = Number(stats.participantes) || 0;
-                const recaudacion = (stats.recaudacion !== null && stats.recaudacion !== undefined) ? Number(stats.recaudacion) : 0;
-                const tienePermiso = (String(curso.verRecaudacion).trim().toUpperCase() === 'SI') || (rolUsuario === 'ADMIN');
-                
-                const elPorcentaje = document.getElementById('dashPorcentajeCobro');
-                const elDetalle = document.getElementById('dashRecaudacionDetalle');
-                const elProgress = document.getElementById('dashProgressCobro');
-                const elValorCurso = document.getElementById('dashValorCurso');
-                const elRecaudado = document.getElementById('dashRecaudadoTotal');
-                
-                if (!tienePermiso) {
-                    if (elPorcentaje) elPorcentaje.textContent = '';
-                    if (elDetalle) elDetalle.textContent = 'Sin permiso para ver finanzas';
-                    if (elProgress) elProgress.style.width = '0%';
-                    if (elValorCurso) elValorCurso.textContent = 'N/A';
-                    if (elRecaudado) elRecaudado.textContent = 'N/A';
-                } else {
-                    const recaudacionEsperada = valorCurso * participantesActivos;
-                    let porcentajeCobro = 0;
-                    if (recaudacionEsperada > 0) {
-                        porcentajeCobro = (recaudacion / recaudacionEsperada) * 100;
-                    }
-                    const porcentajeVisual = Math.min(porcentajeCobro, 100);
-                    
-                    if (elPorcentaje) elPorcentaje.textContent = porcentajeCobro.toFixed(1) + '%';
-                    if (elDetalle) elDetalle.textContent = `Recaudado $${recaudacion.toLocaleString()} de $${recaudacionEsperada.toLocaleString()}`;
-                    if (elProgress) elProgress.style.width = porcentajeVisual + '%';
-                    if (elValorCurso) elValorCurso.textContent = '$' + valorCurso.toLocaleString();
-                    if (elRecaudado) elRecaudado.textContent = '$' + recaudacion.toLocaleString();
-                    
-                    if (elProgress) {
-                        if (porcentajeCobro >= 90) elProgress.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
-                        else if (porcentajeCobro >= 50) elProgress.style.background = 'linear-gradient(90deg, #f39c12, #f1c40f)';
-                        else elProgress.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
-                    }
-                }
-                
-                // ✅ OPTIMIZACIÓN: Cargar módulos en paralelo (no secuencial)
-                await Promise.all([
-                    cargarParticipantes(cursoId),
-                    cargarPagos(cursoId),
-                    cargarHoras(cursoId),
-                    cargarCalificaciones(cursoId)
-                ]);
-                
-                // Cargar estadísticas del dashboard (conteo por curso)
-                cargarConteoParticipantesPorCurso();
-                
-            } catch (error) {
-                console.error('❌ Error cargando estadísticas:', error);
-            }
+        const cursoId = document.getElementById('courseSelector').value;
+        if (!cursoId) return;
+        
+        console.log(`🎯 cargarCurso() - Curso seleccionado: ${cursoId}`);
+        
+        cursoActual = cursoId;
+        const curso = cursosDisponibles.find(c => c.id == cursoId);
+        
+        if (!curso) {
+            console.error(`❌ No se encontró el curso con ID: ${cursoId}`);
+            return;
         }
+        
+        console.log(`✅ Curso encontrado:`, curso);
+        
+        // Actualizar UI básica inmediatamente
+        const elCursoNombre = document.getElementById('dashCursoNombre');
+        if (elCursoNombre) {
+            elCursoNombre.textContent = curso.nombre;
+            console.log(`✓ Nombre actualizado: ${curso.nombre}`);
+        }
+        
+        const elHorasPlan = document.getElementById('dashHorasPlan');
+        if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
+        
+        const badge = document.getElementById('courseBadge');
+        if (badge) {
+            badge.textContent = curso.nivel;
+            badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
+        }
+        
+        try {
+            console.log(`📡 Solicitando estadísticas para: ${cursoId}`);
+            const response = await fetch(`${API_URL}?action=getEstadisticas&cursoId=${encodeURIComponent(cursoId)}&puedeVerRecaudacion=${encodeURIComponent(curso.verRecaudacion || 'NO')}&rolUsuario=${encodeURIComponent(rolUsuario)}`);
+            const stats = await response.json();
+            
+            console.log(`📊 Estadísticas recibidas:`, stats);
+            
+            // Actualizar dashboard
+            const elParticipantes = document.getElementById('dashParticipantes');
+            if (elParticipantes) {
+                elParticipantes.textContent = stats.participantes || 0;
+                console.log(`✓ Participantes actualizados: ${stats.participantes}`);
+            } else {
+                console.error('❌ No se encontró el elemento dashParticipantes');
+            }
+            
+            const elHoras = document.getElementById('dashHoras');
+            if (elHoras) {
+                elHoras.textContent = stats.horas || 0;
+                console.log(`✓ Horas actualizadas: ${stats.horas}`);
+            }
+            
+            // Estado financiero
+            const valorCurso = Number(curso.valorCurso) || 0;
+            const participantesActivos = Number(stats.participantes) || 0;
+            const recaudacion = (stats.recaudacion !== null && stats.recaudacion !== undefined) ? Number(stats.recaudacion) : 0;
+            const tienePermiso = (String(curso.verRecaudacion || 'NO').trim().toUpperCase() === 'SI') || (rolUsuario === 'ADMIN');
+            
+            const elPorcentaje = document.getElementById('dashPorcentajeCobro');
+            const elDetalle = document.getElementById('dashRecaudacionDetalle');
+            const elProgress = document.getElementById('dashProgressCobro');
+            const elValorCurso = document.getElementById('dashValorCurso');
+            const elRecaudado = document.getElementById('dashRecaudadoTotal');
+            
+            console.log(`💰 Cálculos financieros:`, { valorCurso, participantesActivos, recaudacion, tienePermiso });
+            
+            if (!tienePermiso) {
+                if (elPorcentaje) elPorcentaje.textContent = '';
+                if (elDetalle) elDetalle.textContent = 'Sin permiso para ver finanzas';
+                if (elProgress) elProgress.style.width = '0%';
+                if (elValorCurso) elValorCurso.textContent = 'N/A';
+                if (elRecaudado) elRecaudado.textContent = 'N/A';
+            } else {
+                const recaudacionEsperada = valorCurso * participantesActivos;
+                let porcentajeCobro = 0;
+                if (recaudacionEsperada > 0) {
+                    porcentajeCobro = (recaudacion / recaudacionEsperada) * 100;
+                }
+                const porcentajeVisual = Math.min(porcentajeCobro, 100);
+                
+                if (elPorcentaje) {
+                    elPorcentaje.textContent = porcentajeCobro.toFixed(1) + '%';
+                    console.log(`✓ Porcentaje actualizado: ${porcentajeCobro.toFixed(1)}%`);
+                }
+                if (elDetalle) elDetalle.textContent = `Recaudado $${recaudacion.toLocaleString()} de $${recaudacionEsperada.toLocaleString()}`;
+                if (elProgress) elProgress.style.width = porcentajeVisual + '%';
+                if (elValorCurso) elValorCurso.textContent = '$' + valorCurso.toLocaleString();
+                if (elRecaudado) elRecaudado.textContent = '$' + recaudacion.toLocaleString();
+                
+                if (elProgress) {
+                    if (porcentajeCobro >= 90) elProgress.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
+                    else if (porcentajeCobro >= 50) elProgress.style.background = 'linear-gradient(90deg, #f39c12, #f1c40f)';
+                    else elProgress.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+                }
+            }
+            
+            // Cargar módulos en paralelo
+            await Promise.all([
+                cargarParticipantes(cursoId),
+                cargarPagos(cursoId),
+                cargarHoras(cursoId),
+                cargarCalificaciones(cursoId)
+            ]);
+            
+            cargarConteoParticipantesPorCurso();
+            
+        } catch (error) {
+            console.error('❌ Error cargando estadísticas:', error);
+        }
+    }
 
         // ==========================================
         // MÓDULO: PARTICIPANTES
