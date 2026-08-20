@@ -1,8 +1,10 @@
-const CACHE_NAME = 'nasser-group-v1';
+const CACHE_NAME = 'nasser-group-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+    '/icon-192x192.png',
+    '/icon-512x512.png'
   // Nota: No cacheamos las llamadas a la API de Google Sheets 
   // para asegurar que los datos (notas, asistencia, pagos) estén siempre actualizados.
 ];
