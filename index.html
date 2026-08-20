@@ -1526,6 +1526,24 @@
             badge.textContent = curso.nivel;
             badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
         }
+
+        // ✅ ACTUALIZAR FECHAS Y ESTADO DEL CURSO
+        const elFechaInicio = document.getElementById('dashFechaInicio');
+        const elFechaFin = document.getElementById('dashFechaFin');
+        const elEstadoCurso = document.getElementById('dashEstadoCurso');
+
+        if (elFechaInicio) elFechaInicio.textContent = curso.fechaInicio || '-';
+        if (elFechaFin) elFechaFin.textContent = curso.fechaFin || '-';
+        if (elEstadoCurso) {
+            elEstadoCurso.textContent = curso.estado || 'Activo';
+            if (curso.estado === 'Activo') {
+                elEstadoCurso.style.color = '#27ae60'; // Verde
+            } else if (curso.estado === 'Por Iniciar') {
+                elEstadoCurso.style.color = '#f39c12'; // Naranja
+            } else {
+                elEstadoCurso.style.color = '#e74c3c'; // Rojo
+            }
+        }
         
         try {
             console.log(`📡 Solicitando estadísticas para: ${cursoId}`);
