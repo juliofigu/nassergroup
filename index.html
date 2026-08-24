@@ -1464,27 +1464,30 @@
         }
 
         function llenarSelectorCursos() {
-    const selector = document.getElementById('courseSelector');
-    selector.innerHTML = '<option value="">Selecciona un curso...</option>';
-    
-    cursosDisponibles.forEach(curso => {
-        const option = document.createElement('option');
-        option.value = curso.id;
-        
-        // Mostrar estado con emoji (sin bloquear)
-        let estadoEmoji = '';
-        if (curso.estado === 'Activo') {
-            estadoEmoji = ' ✅';
-        } else if (curso.estado === 'Por Iniciar') {
-            estadoEmoji = ' 🔜';
-        } else if (curso.estado === 'Culminado') {
-            estadoEmoji = ' ';
-        } else {
-            estadoEmoji = ' 🔒';
+            const selector = document.getElementById('courseSelector');
+            selector.innerHTML = '<option value="">Selecciona un curso...</option>';
+            
+            cursosDisponibles.forEach(curso => {
+                const option = document.createElement('option');
+                option.value = curso.id;
+                
+                // Mostrar estado con emoji (sin bloquear)
+                let estadoEmoji = '';
+                if (curso.estado === 'Activo') {
+                    estadoEmoji = ' ✅';
+                } else if (curso.estado === 'Por Iniciar') {
+                    estadoEmoji = ' 🔜';
+                } else if (curso.estado === 'Culminado') {
+                    estadoEmoji = ' ';
+                } else {
+                    estadoEmoji = ' 🔒';
+                }
+                
+                // ✅ ESTAS DOS LÍNEAS SON LAS QUE FALTABAN:
+                option.textContent = `${curso.nombre} (${curso.nivel})${estadoEmoji}`;
+                selector.appendChild(option);
+            });
         }
-        
-        });
-}
 
         // ==========================================
         // CARGA DE DATOS DEL CURSO (OPTIMIZADA CON FECHAS)
