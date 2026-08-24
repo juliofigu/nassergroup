@@ -1365,7 +1365,7 @@
 
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbz9ZvqMX9yI0GQDebm-i8ekRMFQdnVcKnkhiAzbPbhmZ_PSXabdKqNx-5gQa6aD67EZuQ/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzGYdn0TY187ZFnlaOEQuYiTv06nLnjStzxHJTKDky4R025SZfLot5_14h1iBJJqLzQBA/exec';
         
         let usuarioActual = '';
         let cursosDisponibles = [];
@@ -2041,13 +2041,13 @@
             }
         }
 
-function actualizarVistaAdmin() {
-    if (rolUsuario === 'ADMIN') {
-        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-    } else {
-        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-    }
-}
+        function actualizarVistaAdmin() {
+            if (rolUsuario === 'ADMIN') {
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+            } else {
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+            }
+        }
 
         // ==========================================
         // MÓDULO: HORAS
