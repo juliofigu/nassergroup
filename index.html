@@ -1365,7 +1365,7 @@
 
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwkmZoop8YOoDpJ50QRSkEo8X0ueXGjGObPNFDg4f9mtrLd9C2ADDuVn1zD19mLIdRi5w/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxGM1TuHdZnkwcoKMp9fZngBhDHJ4rPa16R-vJaSAHeHocTdSe-nPE5hDt-lcr5iKK_gQ/exec';
         
         let usuarioActual = '';
         let cursosDisponibles = [];
@@ -1464,27 +1464,30 @@
         }
 
         function llenarSelectorCursos() {
-            const selector = document.getElementById('courseSelector');
-            selector.innerHTML = '<option value="">Selecciona un curso...</option>';
+        const selector = document.getElementById('courseSelector');
+        selector.innerHTML = '<option value="">Selecciona un curso...</option>';
+        
+        cursosDisponibles.forEach(curso => {
+            const option = document.createElement('option');
+            option.value = curso.id;
             
-            cursosDisponibles.forEach(curso => {
-                const option = document.createElement('option');
-                option.value = curso.id;
-                
-                // Mostrar estado con emoji (sin bloquear)
-                let estadoEmoji = '';
-                if (curso.estado === 'Activo') {
-                    estadoEmoji = ' ✅';
-                } else if (curso.estado === 'Por Iniciar') {
-                    estadoEmoji = ' 🔜';
-                } else if (curso.estado === 'Culminado') {
-                    estadoEmoji = ' ';
-                } else {
-                    estadoEmoji = ' 🔒';
-                }
-                
-            });
-        }
+            // Mostrar estado con emoji
+            let estadoEmoji = '';
+            if (curso.estado === 'Activo') {
+                estadoEmoji = ' ✅';
+            } else if (curso.estado === 'Por Iniciar') {
+                estadoEmoji = ' 🔜';
+            } else if (curso.estado === 'Culminado') {
+                estadoEmoji = ' ';
+            } else {
+                estadoEmoji = ' 🔒';
+            }
+            
+            // ✅ AGREGAR TEXTO Y AÑADIR AL SELECTOR
+            option.textContent = `${curso.nombre} (${curso.nivel})${estadoEmoji}`;
+            selector.appendChild(option);
+        });
+    }
 
         // ==========================================
         // CARGA DE DATOS DEL CURSO (OPTIMIZADA CON FECHAS)
