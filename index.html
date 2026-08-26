@@ -1496,24 +1496,12 @@
         const cursoId = document.getElementById('courseSelector').value;
         if (!cursoId) return;
         
-        console.log(`🎯 cargarCurso() - Curso seleccionado: ${cursoId}`);
-        
         cursoActual = cursoId;
         const curso = cursosDisponibles.find(c => c.id == cursoId);
         
-        if (!curso) {
-            console.error(`❌ No se encontró el curso con ID: ${cursoId}`);
-            return;
-        }
-        
-        console.log(`✅ Curso encontrado:`, curso);
-        
-        // Actualizar UI básica inmediatamente
+        // 1. Actualizar UI básica inmediatamente
         const elCursoNombre = document.getElementById('dashCursoNombre');
-        if (elCursoNombre) {
-            elCursoNombre.textContent = curso.nombre;
-            console.log(`✓ Nombre actualizado: ${curso.nombre}`);
-        }
+        if (elCursoNombre) elCursoNombre.textContent = curso.nombre;
         
         const elHorasPlan = document.getElementById('dashHorasPlan');
         if (elHorasPlan) elHorasPlan.textContent = curso.horasPlanificadas || '0';
@@ -1524,7 +1512,7 @@
             badge.className = `badge-level level-${curso.nivel.toLowerCase()}`;
         }
 
-        // ✅ ACTUALIZAR FECHAS Y ESTADO DEL CURSO
+        // 2. ✅ ACTUALIZAR FECHAS Y ESTADO DEL CURSO (SOLO UNA VEZ)
         const elFechaInicio = document.getElementById('dashFechaInicio');
         const elFechaFin = document.getElementById('dashFechaFin');
         const elEstadoCurso = document.getElementById('dashEstadoCurso');
@@ -1537,8 +1525,10 @@
                 elEstadoCurso.style.color = '#27ae60'; // Verde
             } else if (curso.estado === 'Por Iniciar') {
                 elEstadoCurso.style.color = '#f39c12'; // Naranja
-            } else {
+            } else if (curso.estado === 'Culminado') {
                 elEstadoCurso.style.color = '#e74c3c'; // Rojo
+            } else {
+                elEstadoCurso.style.color = '#7f8c8d'; // Gris por defecto
             }
         }
         
@@ -1548,25 +1538,6 @@
             const stats = await response.json();
             
             console.log(`📊 Estadísticas recibidas:`, stats);
-
-            // ✅ AGREGAR ESTE BLOQUE AQUÍ (después del badge):
-            // Actualizar fechas y estado del curso
-            const elFechaInicio = document.getElementById('dashFechaInicio');
-            const elFechaFin = document.getElementById('dashFechaFin');
-            const elEstadoCurso = document.getElementById('dashEstadoCurso');
-
-            if (elFechaInicio) elFechaInicio.textContent = curso.fechaInicio || '-';
-            if (elFechaFin) elFechaFin.textContent = curso.fechaFin || '-';
-            if (elEstadoCurso) {
-                elEstadoCurso.textContent = curso.estado || 'Activo';
-                if (curso.estado === 'Activo') {
-                    elEstadoCurso.style.color = '#27ae60'; // Verde
-                } else if (curso.estado === 'Por Iniciar') {
-                    elEstadoCurso.style.color = '#f39c12'; // Naranja
-                } else if (curso.estado === 'Culminado') {
-                    elEstadoCurso.style.color = '#e74c3c'; // Rojo
-                }
-            }
             
             // Actualizar dashboard
             const elParticipantes = document.getElementById('dashParticipantes');
