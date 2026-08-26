@@ -1548,6 +1548,25 @@
             const stats = await response.json();
             
             console.log(`📊 Estadísticas recibidas:`, stats);
+
+            // ✅ AGREGAR ESTE BLOQUE AQUÍ (después del badge):
+            // Actualizar fechas y estado del curso
+            const elFechaInicio = document.getElementById('dashFechaInicio');
+            const elFechaFin = document.getElementById('dashFechaFin');
+            const elEstadoCurso = document.getElementById('dashEstadoCurso');
+
+            if (elFechaInicio) elFechaInicio.textContent = curso.fechaInicio || '-';
+            if (elFechaFin) elFechaFin.textContent = curso.fechaFin || '-';
+            if (elEstadoCurso) {
+                elEstadoCurso.textContent = curso.estado || 'Activo';
+                if (curso.estado === 'Activo') {
+                    elEstadoCurso.style.color = '#27ae60'; // Verde
+                } else if (curso.estado === 'Por Iniciar') {
+                    elEstadoCurso.style.color = '#f39c12'; // Naranja
+                } else if (curso.estado === 'Culminado') {
+                    elEstadoCurso.style.color = '#e74c3c'; // Rojo
+                }
+            }
             
             // Actualizar dashboard
             const elParticipantes = document.getElementById('dashParticipantes');
