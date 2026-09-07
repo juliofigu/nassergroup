@@ -1461,6 +1461,86 @@
                 </div>
             </section>
 
+            <!-- SECCIÓN: CERTIFICACIONES -->
+            <section id="seccion-certificaciones" class="content-section hidden">
+                <div class="section-header">
+                    <h2>🏆 Certificaciones de Soldadura</h2>
+                    <p>Control de certificaciones JAMSA NDT PANAMÁ y AWS</p>
+                </div>
+
+                <!-- Dashboard Estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total Inscritos</div>
+                            <div class="stat-value" id="certTotalInscritos">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"></div>
+                        <div class="stat-content">
+                            <div class="stat-label">Certificados</div>
+                            <div class="stat-value" id="certTotalCertificados">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-content">
+                            <div class="stat-label">En Proceso</div>
+                            <div class="stat-value" id="certEnProceso">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Ingresos</div>
+                            <div class="stat-value" id="certIngresos">$0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div style="margin: 20px 0;">
+                    <button class="btn btn-primary" onclick="cert_abrirModalInscripcion()">
+                        <span>➕</span> Nueva Inscripción
+                    </button>
+                    <button class="btn btn-secondary" onclick="cert_cargarLista()">
+                        <span>🔄</span> Actualizar
+                    </button>
+                </div>
+
+                <!-- Tabla -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📋 Soldadores Certificados</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Cédula</th>
+                                        <th>Nombre</th>
+                                        <th>Probetas</th>
+                                        <th>Posiciones</th>
+                                        <th>Total</th>
+                                        <th>Pagado</th>
+                                        <th>Saldo</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="certTablaBody">
+                                    <tr><td colspan="10" class="text-center">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -3151,6 +3231,103 @@
                     }
                 });
             });
+
+            // ==========================================
+            // FUNCIONES DEL MÓDULO DE CERTIFICACIONES
+            // ==========================================
+
+            function mostrarSeccion(seccion) {
+                // Ocultar todas las secciones
+                document.querySelectorAll('.content-section').forEach(s => {
+                    s.classList.add('hidden');
+                });
+                
+                // Quitar active de todos los menú items
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Mostrar la sección seleccionada
+                const seccionSeleccionada = document.getElementById('seccion-' + seccion);
+                if (seccionSeleccionada) {
+                    seccionSeleccionada.classList.remove('hidden');
+                    
+                    // Cargar datos específicos si es certificaciones
+                    if (seccion === 'certificaciones') {
+                        cert_cargarEstadisticas();
+                        cert_cargarLista();
+                    }
+                }
+                
+                // Marcar menú item como active
+                event.currentTarget.classList.add('active');
+            }
+
+            // Funciones de Certificaciones
+            async function cert_cargarEstadisticas() {
+                try {
+                    const response = await fetch(`${API_URL}?action=Cert_getEstadisticas`);
+                    const data = await response.json();
+                    
+                    if (data.exito) {
+                        document.getElementById('certTotalInscritos').textContent = data.estadisticas.totalInscritos;
+                        document.getElementById('certTotalCertificados').textContent = data.estadisticas.totalCertificados;
+                        document.getElementById('certEnProceso').textContent = data.estadisticas.totalEnProceso;
+                        document.getElementById('certIngresos').textContent = '$' + data.estadisticas.ingresosTotales.toLocaleString();
+                    }
+                } catch (error) {
+                    console.error('Error cargando estadísticas:', error);
+                }
+            }
+
+            async function cert_cargarLista() {
+                try {
+                    const response = await fetch(`${API_URL}?action=Cert_getCertificaciones`);
+                    const data = await response.json();
+                    
+                    const tbody = document.getElementById('certTablaBody');
+                    tbody.innerHTML = '';
+                    
+                    if (data.exito && data.certificados.length > 0) {
+                        data.certificados.forEach(cert => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${cert.ID_Certificado || '-'}</td>
+                                <td>${cert.Cedula || '-'}</td>
+                                <td>${cert.Nombre || '-'}</td>
+                                <td>${cert.Nro_Probetas || '0'}</td>
+                                <td>${cert.Posiciones || '-'}</td>
+                                <td>$${cert.Costo_Total || '0'}</td>
+                                <td>$${cert.Total_Pagado || '0'}</td>
+                                <td>$${cert.Saldo_Pendiente || '0'}</td>
+                                <td>${cert.Estado_Final || 'Pendiente'}</td>
+                                <td>
+                                    <button class="btn-sm" onclick="cert_verDetalle('${cert.ID_Certificado}')">👁️</button>
+                                    <button class="btn-sm" onclick="cert_abrirModalPago('${cert.ID_Certificado}')">💰</button>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="10" class="text-center">No hay certificados registrados</td></tr>';
+                    }
+                } catch (error) {
+                    console.error('Error cargando lista:', error);
+                }
+            }
+
+            function cert_abrirModalInscripcion() {
+                alert('Modal de inscripción - En desarrollo');
+                // Aquí irá el modal completo que te envié antes
+            }
+
+            function cert_verDetalle(id) {
+                alert('Ver detalle: ' + id);
+            }
+
+            function cert_abrirModalPago(id) {
+                alert('Registrar pago: ' + id);
+            }
 
     </script>
 
