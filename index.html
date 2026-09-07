@@ -994,6 +994,8 @@
                     <li class="nav-item"><a class="nav-link" onclick="showSection('asistencia')"><span>📋</span> Asistencia</a></li>
                     <li class="nav-item"><a class="nav-link" onclick="showSection('notas')"><span>📝</span> Calificaciones</a></li>
                     <li class="nav-item admin-only hidden"><a class="nav-link" onclick="showSection('pagosProfesores')"><span>💵</span> Pago a Profesores</a></li>
+                    <!-- ✅ AGREGAR ESTA LÍNEA NUEVA: -->
+                    <div class="nav-item" onclick="mostrarSeccion('certificaciones')"><span class="nav-icon">🏆</span><span>Certificaciones</span></div>
                 </ul>
             </nav>
         </aside>
@@ -1360,12 +1362,111 @@
                     </div>
                 </div>
             </section>
+
+            <!-- ========================================== -->
+            <!-- SECCIÓN: MÓDULO DE CERTIFICACIONES (Independiente) -->
+            <!-- ========================================== -->
+            <section id="seccion-certificaciones" class="content-section hidden">
+                <div class="section-header">
+                    <h2>🏆 Certificaciones de Soldadura</h2>
+                    <p>Control de certificaciones JAMSA NDT PANAMÁ y AWS</p>
+                </div>
+
+                <!-- Dashboard de Estadísticas -->
+                <div class="stats-grid" id="certDashboard">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total Inscritos</div>
+                            <div class="stat-value" id="certTotalInscritos">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏅</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Certificados Emitidos</div>
+                            <div class="stat-value" id="certTotalEmitidos">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-content">
+                            <div class="stat-label">En Proceso</div>
+                            <div class="stat-value" id="certEnProceso">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Tasa Aprobación</div>
+                            <div class="stat-value" id="certTasaAprobacion">0%</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Ingresos Reales</div>
+                            <div class="stat-value" id="certIngresosReales">$0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Ingresos Proyectados</div>
+                            <div class="stat-value" id="certIngresosProyectados">$0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="action-buttons" style="margin: 20px 0;">
+                    <button class="btn btn-primary" onclick="abrirModalInscripcionCert()">
+                        <span>➕</span> Nueva Inscripción
+                    </button>
+                    <button class="btn btn-secondary" onclick="cargarListaCertificaciones()">
+                        <span>📋</span> Actualizar Lista
+                    </button>
+                </div>
+
+                <!-- Tabla de Certificados -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📋 Lista de Soldadores Certificados</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table" id="tablaCertificaciones">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Cédula</th>
+                                        <th>Nombre</th>
+                                        <th>Probetas</th>
+                                        <th>Posiciones</th>
+                                        <th>Credencial</th>
+                                        <th>Total</th>
+                                        <th>Pagado</th>
+                                        <th>Saldo</th>
+                                        <th>Estado Prueba</th>
+                                        <th>Estado Final</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyCertificaciones">
+                                    <tr><td colspan="12" class="text-center">Cargando datos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbyYsPannQJWhNxDUD4wAz-45sjYjUAh8fOe7gJjU_uGd_dHQSIncY8z1e6ccxdSpLDkkA/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxaaq-qNZFrI9xEbW0AFkViKhFnpNH5qG_G7aEYUxazsQ16iB1w4DsJw6iIkT1DbXAiwg/exec';
         
         let usuarioActual = '';
         let cursosDisponibles = [];
