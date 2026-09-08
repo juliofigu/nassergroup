@@ -1447,7 +1447,7 @@
 
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxaaq-qNZFrI9xEbW0AFkViKhFnpNH5qG_G7aEYUxazsQ16iB1w4DsJw6iIkT1DbXAiwg/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw4vIPlVrznt_IrlnPSXW2VEUeNBwSQxQR6h07pVp8RrWKAIYGodj2ScsFcZ4YVZthCqQ/exec';
         
         let usuarioActual = '';
         let cursosDisponibles = [];
@@ -3189,8 +3189,85 @@
                 }
             }
 
+            // ==========================================
+            // LÓGICA DEL MODAL DE CERTIFICACIONES
+            // ==========================================
+
             function cert_abrirModalInscripcion() {
-                alert('✅ Backend listo. El modal de inscripción se activará en el próximo paso.');
+                document.getElementById('modalInscripcionCert').classList.remove('hidden');
+                document.getElementById('modalInscripcionCert').style.display = 'flex';
+                document.getElementById('formCert').reset();
+                document.getElementById('certFecha').valueAsDate = new Date();
+                cert_calcular();
+            }
+
+            function cert_cerrarModal() {
+                document.getElementById('modalInscripcionCert').classList.add('hidden');
+                document.getElementById('modalInscripcionCert').style.display = 'none';
+            }
+
+            function cert_calcular() {
+                const probetas = parseInt(document.getElementById('certProbetas').value) || 1;
+                const especimenes = parseInt(document.getElementById('certEspecimenes').value) || 2;
+                const aws = document.getElementById('certAWS').checked;
+                const posiciones = document.querySelectorAll('.pos-cert:checked').length;
+                
+                const total = 25 + (50*probetas) + (30*especimenes*probetas) + (25*especimenes*probetas) + 3 + 35 + (aws ? 170*posiciones : 0);
+                const minimo = Math.ceil(total * 0.6);
+                
+                document.getElementById('certTotalDisplay').textContent = '$' + total;
+                document.getElementById('certMinDisplay').textContent = '$' + minimo;
+            }
+
+            async function cert_guardar() {
+                const form = document.getElementById('formCert');
+                if (!form.checkValidity()) { alert('Completa todos los campos obligatorios (*)'); return; }
+                if (!document.getElementById('certDeclaracion').checked) { alert('Debes aceptar la declaración'); return; }
+                
+                const total = parseInt(document.getElementById('certTotalDisplay').textContent.replace('$',''));
+                const minimo = parseInt(document.getElementById('certMinDisplay').textContent.replace('$',''));
+                const pago = parseFloat(document.getElementById('certPago').value);
+                
+                if (pago < minimo) { alert(`El pago mínimo es $${minimo}`); return; }
+                
+                const posiciones = [];
+                document.querySelectorAll('.pos-cert:checked').forEach(p => posiciones.push(p.value));
+                
+                const data = {
+                    cedula: document.getElementById('certCedula').value,
+                    nombre: document.getElementById('certNombre').value,
+                    telefono: document.getElementById('certTelefono').value,
+                    email: document.getElementById('certEmail').value,
+                    aniosExperiencia: document.getElementById('certExp').value,
+                    declaracionAceptada: true,
+                    nroProbetas: document.getElementById('certProbetas').value,
+                    nroEspecimenes: document.getElementById('certEspecimenes').value,
+                    posiciones: posiciones,
+                    credencialAWS: document.getElementById('certAWS').checked,
+                    pagoInicial: pago,
+                    metodoPago: document.getElementById('certMetodo').value,
+                    referencia: document.getElementById('certRef').value,
+                    fechaPago: document.getElementById('certFecha').value
+                };
+
+                try {
+                    const res = await fetch(`${API_URL}?action=Cert_inscribirSoldador`, {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+                    
+                    if (result.exito) {
+                        alert('✅ ' + result.mensaje);
+                        cert_cerrarModal();
+                        cert_cargarEstadisticas();
+                        cert_cargarLista();
+                    } else {
+                        alert('❌ Error: ' + result.error);
+                    }
+                } catch (e) {
+                    alert('Error de conexión: ' + e);
+                }
             }
             //***************************************************************************************************************************
     </script>
@@ -3434,6 +3511,88 @@
                     </form>
                 </div>
             </div>
+            <!-- MODAL INSCRIPCIÓN CERTIFICACIONES -->
+            <div id="modalInscripcionCert" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+                <div class="modal-content" style="background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 700px; max-height: 90vh; overflow-y: auto; position: relative;">
+                    <button onclick="cert_cerrarModal()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; border: none; background: none; cursor: pointer;">&times;</button>
+                    <h3 style="margin-top: 0;">➕ Inscribir Soldador para Certificación</h3>
+                    
+                    <form id="formCert">
+                        <!-- Datos Básicos -->
+                        <h4>👤 Datos del Soldador</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                            <input type="text" id="certCedula" placeholder="Cédula *" required style="width: 100%; padding: 8px;">
+                            <input type="text" id="certNombre" placeholder="Nombre Completo *" required style="width: 100%; padding: 8px;">
+                            <input type="tel" id="certTelefono" placeholder="Teléfono *" required style="width: 100%; padding: 8px;">
+                            <input type="email" id="certEmail" placeholder="Email" style="width: 100%; padding: 8px;">
+                            <input type="number" id="certExp" placeholder="Años de Experiencia *" min="0" required style="width: 100%; padding: 8px;">
+                        </div>
 
+                        <!-- Declaración -->
+                        <div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9em;">
+                            <label style="display: flex; gap: 8px; align-items: flex-start;">
+                                <input type="checkbox" id="certDeclaracion" required style="margin-top: 4px;">
+                                <span>Declaro tener experiencia para las pruebas. Entiendo que si no apruebo, <b>el dinero NO se reembolsa</b>.</span>
+                            </label>
+                        </div>
+
+                        <!-- Configuración -->
+                        <h4>🔧 Configuración</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <label>Probetas: 
+                                <select id="certProbetas" onchange="cert_calcular()" style="width: 100%; padding: 5px;">
+                                    <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                                </select>
+                            </label>
+                            <label>Especímenes/Probeta: 
+                                <select id="certEspecimenes" onchange="cert_calcular()" style="width: 100%; padding: 5px;">
+                                    <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option>
+                                </select>
+                            </label>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label>Posiciones: </label><br>
+                            <label><input type="checkbox" class="pos-cert" value="1G" onchange="cert_calcular()"> 1G</label>
+                            <label><input type="checkbox" class="pos-cert" value="2G" onchange="cert_calcular()"> 2G</label>
+                            <label><input type="checkbox" class="pos-cert" value="3G" onchange="cert_calcular()"> 3G</label>
+                            <label><input type="checkbox" class="pos-cert" value="4G" onchange="cert_calcular()"> 4G</label>
+                            <label><input type="checkbox" class="pos-cert" value="5G" onchange="cert_calcular()"> 5G</label>
+                            <label><input type="checkbox" class="pos-cert" value="6G" onchange="cert_calcular()"> 6G</label>
+                        </div>
+
+                        <label style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
+                            <input type="checkbox" id="certAWS" onchange="cert_calcular()">
+                            <span>Agregar Credencial AWS + WeldCert Pro ($170/posición)</span>
+                        </label>
+
+                        <!-- Resumen -->
+                        <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between;"><span>Total:</span> <b id="certTotalDisplay">$223</b></div>
+                            <div style="display: flex; justify-content: space-between; color: #d9534f;"><span>Mínimo 60%:</span> <b id="certMinDisplay">$134</b></div>
+                        </div>
+
+                        <!-- Pago -->
+                        <h4>💳 Pago Inicial</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                            <input type="number" id="certPago" placeholder="Monto a pagar *" step="0.01" required style="width: 100%; padding: 8px;">
+                            <select id="certMetodo" required style="width: 100%; padding: 8px;">
+                                <option value="">Método...</option>
+                                <option value="Zelle">Zelle</option>
+                                <option value="Banesco">Banesco</option>
+                                <option value="Western Union">Western Union</option>
+                                <option value="Efectivo">Efectivo</option>
+                            </select>
+                            <input type="text" id="certRef" placeholder="Referencia *" required style="width: 100%; padding: 8px;">
+                            <input type="date" id="certFecha" required style="width: 100%; padding: 8px;">
+                        </div>
+
+                        <div style="text-align: right;">
+                            <button type="button" onclick="cert_cerrarModal()" style="padding: 8px 15px; margin-right: 10px;">Cancelar</button>
+                            <button type="button" onclick="cert_guardar()" style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">💾 Inscribir</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 </body>
 </html>
