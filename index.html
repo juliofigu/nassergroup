@@ -2536,6 +2536,7 @@
         // NAVEGACIÓN
         // ==========================================
         function showSection(sectionId) {
+            console.log(' showSection llamado con:', sectionId); // ← AGREGAR ESTA LÍNEA
             // 1. Ocultar todas las secciones y quitar la clase 'active' de los links
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
