@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nasser-group-v2';
+const CACHE_NAME = 'nasser-group-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
