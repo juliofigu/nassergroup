@@ -1447,7 +1447,7 @@
 
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbw4vIPlVrznt_IrlnPSXW2VEUeNBwSQxQR6h07pVp8RrWKAIYGodj2ScsFcZ4YVZthCqQ/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzR6cYav_weDu46ql25mCaw9r-4K_guODOjfDED4rOurOMmkvd1dt1LWO7hyx-REXen8g/exec';
         
         let usuarioActual = '';
         let cursosDisponibles = [];
@@ -3205,19 +3205,33 @@
                 document.getElementById('modalInscripcionCert').classList.add('hidden');
                 document.getElementById('modalInscripcionCert').style.display = 'none';
             }
-
+            //CALCULOS DE COSTOS DE LA CERTIFICACIONES, ajustar costos aqui..!
             function cert_calcular() {
-                const probetas = parseInt(document.getElementById('certProbetas').value) || 1;
-                const especimenes = parseInt(document.getElementById('certEspecimenes').value) || 2;
-                const aws = document.getElementById('certAWS').checked;
-                const posiciones = document.querySelectorAll('.pos-cert:checked').length;
-                
-                const total = 25 + (50*probetas) + (30*especimenes*probetas) + (25*especimenes*probetas) + 3 + 35 + (aws ? 170*posiciones : 0);
-                const minimo = Math.ceil(total * 0.6);
-                
-                document.getElementById('certTotalDisplay').textContent = '$' + total;
-                document.getElementById('certMinDisplay').textContent = '$' + minimo;
-            }
+            const probetas = parseInt(document.getElementById('certProbetas').value) || 1;
+            const especimenes = parseInt(document.getElementById('certEspecimenes').value) || 2;
+            const weldCert = document.getElementById('certWeldCert').checked;
+            const posiciones = document.querySelectorAll('.pos-cert:checked').length;
+            
+            // Costos base obligatorios
+            const atestiguamiento = 25;
+            const inspeccionVT = 50 * probetas;
+            const extraccion = 30 * especimenes * probetas;
+            const doblez = 25 * especimenes * probetas;
+            const wpqr = 3;
+            const jamsa = 35;
+            
+            // AWS siempre incluida
+            const aws = 170 * posiciones;
+            
+            // WeldCert Pro solo si se marca
+            const weldCertPro = weldCert ? (200 * posiciones) : 0;
+            
+            const total = atestiguamiento + inspeccionVT + extraccion + doblez + wpqr + jamsa + aws + weldCertPro;
+            const minimo = Math.ceil(total * 0.6);
+            
+            document.getElementById('certTotalDisplay').textContent = '$' + total;
+            document.getElementById('certMinDisplay').textContent = '$' + minimo;
+        }
 
             async function cert_guardar() {
                 const form = document.getElementById('formCert');
@@ -3234,22 +3248,22 @@
                 document.querySelectorAll('.pos-cert:checked').forEach(p => posiciones.push(p.value));
                 
                 const data = {
-                    cedula: document.getElementById('certCedula').value,
-                    nombre: document.getElementById('certNombre').value,
-                    telefono: document.getElementById('certTelefono').value,
-                    email: document.getElementById('certEmail').value,
-                    aniosExperiencia: document.getElementById('certExp').value,
-                    declaracionAceptada: true,
-                    nroProbetas: document.getElementById('certProbetas').value,
-                    nroEspecimenes: document.getElementById('certEspecimenes').value,
-                    posiciones: posiciones,
-                    credencialAWS: document.getElementById('certAWS').checked,
-                    pagoInicial: pago,
-                    metodoPago: document.getElementById('certMetodo').value,
-                    referencia: document.getElementById('certRef').value,
-                    fechaPago: document.getElementById('certFecha').value
-                };
-
+                cedula: document.getElementById('certCedula').value,
+                nombre: document.getElementById('certNombre').value,
+                telefono: document.getElementById('certTelefono').value,
+                email: document.getElementById('certEmail').value,
+                aniosExperiencia: document.getElementById('certExp').value,
+                declaracionAceptada: true,
+                nroProbetas: document.getElementById('certProbetas').value,
+                nroEspecimenes: document.getElementById('certEspecimenes').value,
+                posiciones: posiciones,
+                credencialAWS: true,  // ✅ Siempre incluida
+                weldCertPro: document.getElementById('certWeldCert').checked,  // ✅ Optativa
+                pagoInicial: pago,
+                metodoPago: document.getElementById('certMetodo').value,
+                referencia: document.getElementById('certRef').value,
+                fechaPago: document.getElementById('certFecha').value
+            };
                 try {
                     const res = await fetch(`${API_URL}?action=Cert_inscribirSoldador`, {
                         method: 'POST',
@@ -3561,9 +3575,15 @@
                             <label><input type="checkbox" class="pos-cert" value="6G" onchange="cert_calcular()"> 6G</label>
                         </div>
 
+                        <!-- Credencial AWS: Siempre incluida -->
+                        <div style="background: #e8f4fd; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #2196F3;">
+                            <strong> Credencial AWS:</strong> Incluida automáticamente ($170 por posición)
+                        </div>
+
+                        <!-- WeldCert Pro: Optativa -->
                         <label style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
-                            <input type="checkbox" id="certAWS" onchange="cert_calcular()">
-                            <span>Agregar Credencial AWS + WeldCert Pro ($170/posición)</span>
+                            <input type="checkbox" id="certWeldCert" onchange="cert_calcular()">
+                            <span>Agregar Registro WeldCert Pro ($170/posición adicional)</span>
                         </label>
 
                         <!-- Resumen -->
