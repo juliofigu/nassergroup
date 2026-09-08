@@ -2582,12 +2582,6 @@
                     cargarResumenProfesores();
                 }
 
-                // ✅ NUEVO: Si entra a certificaciones, cargar sus datos
-                if (sectionId === 'certificaciones') {
-                    cert_cargarEstadisticas();
-                    cert_cargarLista();
-                }
-
         }
 
             // ==========================================
@@ -3135,85 +3129,7 @@
                     }
                 });
             });
-            <!-- SECCIÓN: CERTIFICACIONES -->
-            <section id="certificaciones" class="section hidden">
-                <div class="section-header">
-                    <h2>🏆 Certificaciones de Soldadura</h2>
-                    <p>Control de certificaciones JAMSA NDT PANAMÁ y AWS</p>
-                </div>
-                
-                <!-- Dashboard de Estadísticas -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">👥</div>
-                        <div class="stat-content">
-                            <div class="stat-label">Total Inscritos</div>
-                            <div class="stat-value" id="certTotalInscritos">0</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">🏅</div>
-                        <div class="stat-content">
-                            <div class="stat-label">Certificados</div>
-                            <div class="stat-value" id="certTotalCertificados">0</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⏳</div>
-                        <div class="stat-content">
-                            <div class="stat-label">En Proceso</div>
-                            <div class="stat-value" id="certEnProceso">0</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">💰</div>
-                        <div class="stat-content">
-                            <div class="stat-label">Ingresos</div>
-                            <div class="stat-value" id="certIngresos">$0</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Botones de Acción -->
-                <div style="margin: 20px 0;">
-                    <button class="btn btn-primary" onclick="cert_abrirModalInscripcion()">
-                        <span>➕</span> Nueva Inscripción
-                    </button>
-                    <button class="btn btn-secondary" onclick="cert_cargarLista()">
-                        <span>🔄</span> Actualizar Lista
-                    </button>
-                </div>
-                
-                <!-- Tabla de Certificados -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📋 Soldadores Certificados</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Cédula</th>
-                                        <th>Nombre</th>
-                                        <th>Probetas</th>
-                                        <th>Posiciones</th>
-                                        <th>Total</th>
-                                        <th>Pagado</th>
-                                        <th>Saldo</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="certTablaBody">
-                                    <tr><td colspan="10" class="text-center">Cargando datos del servidor...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
+
     </script>
 
     <!-- Registro del Service Worker para PWA -->
