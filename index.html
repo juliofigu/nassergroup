@@ -1085,7 +1085,7 @@
                             <div style="font-size: 14px; font-weight: 600; color: #27ae60;" id="dashEstadoCurso">-</div>
                         </div>
                         <p style="margin-top: 15px; font-size: 13px; color: #7f8c8d;">
-                            <strong>Materias:</strong> Teoría (Seguridad), Teoría, Práctica
+                            <strong>Materias:</strong> OSHA (Seguridad), Teoría, Práctica
                         </p>
                     </div>
                     
@@ -1163,7 +1163,7 @@
                 <div class="card" style="margin-bottom: 20px;">
                     <h4 style="margin-bottom: 15px; color: #2c3e50;">Resumen de Horas por Materia</h4>
                     <div class="dashboard-cards" style="margin-bottom: 0;">
-                        <div class="card" style="background: #f8f9fa;"><div class="card-title">Teoría (Seguridad)</div><div class="card-value" id="horasSeguridad" style="font-size: 24px;">0h</div></div>
+                        <div class="card" style="background: #f8f9fa;"><div class="card-title">OSHA (Seguridad)</div><div class="card-value" id="horasSeguridad" style="font-size: 24px;">0h</div></div>
                         <div class="card" style="background: #f8f9fa;"><div class="card-title">Teoría</div><div class="card-value" id="horasCiencia" style="font-size: 24px;">0h</div></div>
                         <div class="card" style="background: #f8f9fa;"><div class="card-title">Práctica</div><div class="card-value" id="horasPractica" style="font-size: 24px;">0h</div></div>
                         <div class="card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;"><div class="card-title" style="color: rgba(255,255,255,0.9);">Total Dictadas</div><div class="card-value" id="horasTotal" style="font-size: 28px; color: white;">0h</div><div class="card-subtitle" style="color: rgba(255,255,255,0.8);">De <span id="horasPlanificadas">0</span> planificadas</div></div>
@@ -1175,7 +1175,7 @@
                     <form id="formHoras" onsubmit="event.preventDefault(); guardarHoras();">
                         <div class="form-grid">
                             <div class="form-group"><label>Fecha de la Clase *</label><input type="date" id="horaFecha" required></div>
-                            <div class="form-group"><label>Materia Dictada *</label><select id="horaMateria" required><option value="">Selecciona una materia...</option><option value="OSHA (Seguridad)">Teoría (Seguridad)</option><option value="Teoria">Teoría</option><option value="Practica">Práctica</option></select></div>
+                            <div class="form-group"><label>Materia Dictada *</label><select id="horaMateria" required><option value="">Selecciona una materia...</option><option value="OSHA (Seguridad)">OSHA (Seguridad)</option><option value="Teoria">Teoría</option><option value="Practica">Práctica</option></select></div>
                             <div class="form-group"><label>Horas Dictadas *</label><input type="number" id="horaCantidad" step="0.5" min="0.5" max="12" placeholder="Ej: 2 o 2.5" required></div>
                             <div class="form-group" style="display: flex; align-items: flex-end;"><button type="submit" class="btn-success" id="btnGuardarHoras" style="width: 100%; padding: 12px;">💾 Guardar Registro</button></div>
                         </div>
@@ -2480,7 +2480,7 @@
 
         function abrirModalCalificacion(cedula, nombre, teoriaSeg, teoriaCien, practica, observaciones) {
             const curso = cursosDisponibles.find(c => c.id === cursoActual);
-            document.getElementById('labelTeoriaSeg').textContent = `Teoría (Seguridad) - ${curso.pesoTeoriaSeg}%`;
+            document.getElementById('labelTeoriaSeg').textContent = `OSHA (Seguridad) - ${curso.pesoTeoriaSeg}%`;
             document.getElementById('labelTeoriaCien').textContent = `Teoría (Ciencia de Materiales) - ${curso.pesoTeoriaCien}%`;
             document.getElementById('labelPractica').textContent = `Práctica - ${curso.pesoPractica}%`;
             
@@ -3417,7 +3417,7 @@
                             <div class="form-group">
                                 <label>Materia Evaluada *</label>
                                 <select id="notaMateria" required>
-                                    <option value="OSHA (Seguridad)">Teoría (Seguridad)</option>
+                                    <option value="OSHA (Seguridad)">OSHA (Seguridad)</option>
                                     <option value="Teoria">Teoría (Ciencia de Materiales)</option>
                                     <option value="Practica">Práctica</option>
                                 </select>
