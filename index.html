@@ -1175,7 +1175,7 @@
                     <form id="formHoras" onsubmit="event.preventDefault(); guardarHoras();">
                         <div class="form-grid">
                             <div class="form-group"><label>Fecha de la Clase *</label><input type="date" id="horaFecha" required></div>
-                            <div class="form-group"><label>Materia Dictada *</label><select id="horaMateria" required><option value="">Selecciona una materia...</option><option value="Teoria (Seguridad)">Teoría (Seguridad)</option><option value="Teoria">Teoría</option><option value="Practica">Práctica</option></select></div>
+                            <div class="form-group"><label>Materia Dictada *</label><select id="horaMateria" required><option value="">Selecciona una materia...</option><option value="OSHA (Seguridad)">Teoría (Seguridad)</option><option value="Teoria">Teoría</option><option value="Practica">Práctica</option></select></div>
                             <div class="form-group"><label>Horas Dictadas *</label><input type="number" id="horaCantidad" step="0.5" min="0.5" max="12" placeholder="Ej: 2 o 2.5" required></div>
                             <div class="form-group" style="display: flex; align-items: flex-end;"><button type="submit" class="btn-success" id="btnGuardarHoras" style="width: 100%; padding: 12px;">💾 Guardar Registro</button></div>
                         </div>
@@ -2150,7 +2150,7 @@
                     data.historial.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
                     
                     data.historial.forEach(reg => {
-                        if (reg.materia === 'Teoria (Seguridad)') hSeg += reg.horas;
+                        if (reg.materia === 'OSHA (Seguridad)') hSeg += reg.horas;
                         else if (reg.materia === 'Teoria') hCien += reg.horas;
                         else if (reg.materia === 'Practica') hPrac += reg.horas;
                         hTot += reg.horas;
@@ -3417,7 +3417,7 @@
                             <div class="form-group">
                                 <label>Materia Evaluada *</label>
                                 <select id="notaMateria" required>
-                                    <option value="Teoria (Seguridad)">Teoría (Seguridad)</option>
+                                    <option value="OSHA (Seguridad)">Teoría (Seguridad)</option>
                                     <option value="Teoria">Teoría (Ciencia de Materiales)</option>
                                     <option value="Practica">Práctica</option>
                                 </select>
