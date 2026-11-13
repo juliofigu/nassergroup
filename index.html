@@ -1447,7 +1447,7 @@
 
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxqslCUZw1KNMVfolGLlyxkRr5TWCJ0mel4N38Q7DszFHiUQnaYgTLiMF0WbaeguqP6/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwS56K8LhlqjcULyDK-WMiMQ_ntGCAx954Bn7yWV9Isfxsw-46qLWUPtSribiTOCwxfbw/exec';
         
         let usuarioActual = '';
         let cursosDisponibles = [];
@@ -1752,17 +1752,58 @@
                             btnClass = 'btn-primary';
                         }
                         
-                        // Determinar saldo
+                        // ✅ NUEVO: Lógica de saldos separados (Curso y Alojamiento)
+                        const saldoCurso = Number(p.saldoCurso) || 0;
+                        const saldoAlojamiento = Number(p.saldoAlojamiento) || 0;
+                        const requiereAlojamiento = (p.requiereAlojamiento === true || String(p.requiereAlojamiento).toLowerCase() === 'sí' || String(p.requiereAlojamiento).toLowerCase() === 'si');
+                        
+                        // Determinar badge general de saldo
                         let saldoBadgeClass = 'badge-success';
                         let saldoTexto = 'Cancelado';
-                        
-                        if (saldoPendiente > 0) {
+                        if (saldoCurso > 0 || saldoAlojamiento > 0) {
                             saldoBadgeClass = 'badge-danger';
-                            saldoTexto = `Pendiente: $${saldoPendiente.toFixed(2)}`;
-                        } else if (saldoPendiente < 0) {
-                            saldoBadgeClass = 'badge-warning';
-                            saldoTexto = 'Sobrepagó';
+                            saldoTexto = 'Pendiente';
                         }
+
+                        // ✅ NUEVO: HTML detallado para la columna de Saldo / Pagos
+                        let htmlAlojamiento = '';
+                        if (requiereAlojamiento) {
+                            const colorAlojamiento = saldoAlojamiento > 0 ? '#d9534f' : '#28a745'; // Rojo si debe, verde si pagó
+                            htmlAlojamiento = `<div style="color: ${colorAlojamiento}; font-weight: 500; margin-top: 4px;">🏨 Alojamiento: $${saldoAlojamiento.toFixed(2)}</div>`;
+                        } else {
+                            htmlAlojamiento = `<div style="color: #6c757d; margin-top: 4px;">🏨 Alojamiento: No requiere</div>`;
+                        }
+
+                        // ✅ NUEVO: Dibujar la fila con los datos separados
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${p.cedula}</td>
+                                <td>${p.nombre}</td>
+                                <td>${p.edad}</td>
+                                <td>${p.correo}</td>
+                                <td>${p.telefono}</td>
+                                <td><span class="badge ${estadoBadgeClass}">${p.estado}</span></td>
+                                <td style="text-align: left; vertical-align: middle; padding: 10px;">
+                                    <span class="badge ${saldoBadgeClass}" style="font-size: 12px; padding: 5px 10px; margin-bottom: 8px; display: inline-block;">
+                                        ${saldoTexto}
+                                    </span>
+                                    <div style="font-size: 12px; color: #2c3e50; text-align: left;">
+                                        <div style="margin-bottom: 4px;">📚 <b>Curso:</b> $${saldoCurso.toFixed(2)} <span style="color:#7f8c8d; font-size:10px;">(De $${Number(p.valorCurso).toFixed(2)})</span></div>
+                                        ${htmlAlojamiento}
+                                        <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #bdc3c7; color: #27ae60; font-weight: bold;">
+                                            💰 Total Pagado: $${(Number(p.totalPagado) || 0).toFixed(2)}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="${btnClass}" onclick="cambiarEstadoParticipante('${p.id}', '${p.nombre}', '${p.estado}')" style="margin-right: 5px; padding: 5px 10px; font-size: 11px;">
+                                        🔄 ${btnTexto}
+                                    </button>
+                                    <button class="btn-danger" onclick="eliminarParticipante('${p.id}', '${p.nombre}')" style="padding: 5px 10px; font-size: 11px;">
+                                        🗑️ Eliminar
+                                    </button>
+                                </td>
+                            </tr>`;
                         
                         // ✅ CORRECCIÓN 2: Usar los campos correctos en el HTML
                         tbody.innerHTML += `
@@ -1838,6 +1879,9 @@
                 edad: document.getElementById('partEdad').value.trim(),
                 correo: document.getElementById('partCorreo').value.trim(),
                 telefono: document.getElementById('partTelefono').value.trim(),
+                    // ✅ NUEVO: Campos de alojamiento
+                requiereAlojamiento: document.getElementById('partRequiereAlojamiento')?.checked || false,
+                valorAlojamiento: document.getElementById('partValorAlojamiento')?.value || 0,
                 profesor: usuarioActual
             };
 
@@ -2092,9 +2136,11 @@
                 abonoNum: document.getElementById('pagoAbonoNum').value,
                 referencia: document.getElementById('pagoReferencia').value,
                 banco: document.getElementById('pagoBanco').value,
+                // ✅ NUEVO: Tipo de pago (Curso o Alojamiento)
+                tipoPago: document.getElementById('pagoTipo') ? document.getElementById('pagoTipo').value : 'Curso',
                 profesor: usuarioActual
             };
-
+            // ... (el resto de la función try/catch se queda igual) ...
             try {
                 const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(datos) });
                 const result = await response.json();
@@ -3361,6 +3407,27 @@
                                 <label>Monto (USD) *</label>
                                 <input type="number" id="pagoMonto" step="0.01" min="0.01" placeholder="Ej: 50.00" required>
                             </div>
+
+                            <!-- ✅ NUEVO: Selector de Tipo de Pago -->
+                            <div class="form-group" style="margin-top: 10px;">
+                                <label style="font-weight: 600;">Tipo de Pago *</label>
+                                <select id="pagoTipo" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                    <option value="Curso">📚 Curso</option>
+                                    <option value="Alojamiento">🏨 Alojamiento</option>
+                                </select>
+                                <small style="color: #6c757d; font-size: 0.8em;">Selecciona a qué concepto se aplica este abono.</small>
+                            </div>
+
+                            <!-- ✅ NUEVO: Selector de Tipo de Pago -->
+                            <div class="form-group">
+                                <label style="font-weight: 600;">Tipo de Pago *</label>
+                                <select id="pagoTipo" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                    <option value="Curso">Curso</option>
+                                    <option value="Alojamiento">Alojamiento</option>
+                                </select>
+                                <small style="color: #6c757d; font-size: 0.8em;">Selecciona a qué concepto se aplica este abono.</small>
+                            </div>
+
                             <div class="form-group">
                                 <label>Número de Abono *</label>
                                 <select id="pagoAbonoNum" required>
@@ -3519,6 +3586,21 @@
                             <div class="form-group" style="grid-column: 1 / -1;"><label>Correo Electrónico *</label><input type="email" id="partCorreo" placeholder="correo@ejemplo.com" required></div>
                         </div>
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
+
+                            <!-- ✅ NUEVO: Sección de Alojamiento -->
+                            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #dee2e6;">
+                                <h5 style="margin-top: 0; color: #495057; font-size: 1rem;">🏨 Paquete de Alojamiento (Opcional)</h5>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <input type="checkbox" id="partRequiereAlojamiento" style="width: 18px; height: 18px; cursor: pointer;" onchange="document.getElementById('divValorAlojamiento').style.display = this.checked ? 'block' : 'none'">
+                                    <label for="partRequiereAlojamiento" style="cursor: pointer; font-weight: 500;">El participante requiere paquete de alojamiento + comidas</label>
+                                </div>
+                                <div id="divValorAlojamiento" style="display: none;">
+                                    <label style="font-size: 0.9em; color: #6c757d;">Monto acordado para Alojamiento (USD):</label>
+                                    <input type="number" id="partValorAlojamiento" class="form-control" placeholder="Ej: 200" min="0" step="0.01" style="width: 100%; padding: 8px; margin-top: 5px;" value="200">
+                                    <small style="color: #6c757d; font-size: 0.8em;">* Valor base: $200 (ajustable según acuerdo)</small>
+                                </div>
+                            </div>
+
                             <button type="button" class="btn-cancel" onclick="cerrarModalParticipante()">Cancelar</button>
                             <button type="submit" class="btn-success" id="btnGuardarPart" style="flex: 1;">💾 Guardar y Matricular</button>
                         </div>
