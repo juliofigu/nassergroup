@@ -1737,75 +1737,7 @@
                         const tieneNotas = p.valorCurso > 0;
                         const saldoPendiente = p.valorCurso - p.totalPagado;
                         
-                        // Determinar estado
-                        let estadoBadgeClass = 'badge-success';
-                        let btnTexto = 'Desactivar';
-                        let btnClass = 'btn-warning';
-                        
-                        if (p.estado === 'Inactivo') {
-                            estadoBadgeClass = 'badge-danger';
-                            btnTexto = 'Activar';
-                            btnClass = 'btn-success';
-                        } else if (p.estado === 'Graduado') {
-                            estadoBadgeClass = 'badge-info';
-                            btnTexto = 'Reactivar';
-                            btnClass = 'btn-primary';
-                        }
-                        
-                        // ✅ NUEVO: Lógica de saldos separados (Curso y Alojamiento)
-                        const saldoCurso = Number(p.saldoCurso) || 0;
-                        const saldoAlojamiento = Number(p.saldoAlojamiento) || 0;
-                        const requiereAlojamiento = (p.requiereAlojamiento === true || String(p.requiereAlojamiento).toLowerCase() === 'sí' || String(p.requiereAlojamiento).toLowerCase() === 'si');
-                        
-                        // Determinar badge general de saldo
-                        let saldoBadgeClass = 'badge-success';
-                        let saldoTexto = 'Cancelado';
-                        if (saldoCurso > 0 || saldoAlojamiento > 0) {
-                            saldoBadgeClass = 'badge-danger';
-                            saldoTexto = 'Pendiente';
-                        }
-
-                        // ✅ NUEVO: HTML detallado para la columna de Saldo / Pagos
-                        let htmlAlojamiento = '';
-                        if (requiereAlojamiento) {
-                            const colorAlojamiento = saldoAlojamiento > 0 ? '#d9534f' : '#28a745'; // Rojo si debe, verde si pagó
-                            htmlAlojamiento = `<div style="color: ${colorAlojamiento}; font-weight: 500; margin-top: 4px;">🏨 Alojamiento: $${saldoAlojamiento.toFixed(2)}</div>`;
-                        } else {
-                            htmlAlojamiento = `<div style="color: #6c757d; margin-top: 4px;">🏨 Alojamiento: No requiere</div>`;
-                        }
-
-                        // ✅ NUEVO: Dibujar la fila con los datos separados
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${p.cedula}</td>
-                                <td>${p.nombre}</td>
-                                <td>${p.edad}</td>
-                                <td>${p.correo}</td>
-                                <td>${p.telefono}</td>
-                                <td><span class="badge ${estadoBadgeClass}">${p.estado}</span></td>
-                                <td style="text-align: left; vertical-align: middle; padding: 10px;">
-                                    <span class="badge ${saldoBadgeClass}" style="font-size: 12px; padding: 5px 10px; margin-bottom: 8px; display: inline-block;">
-                                        ${saldoTexto}
-                                    </span>
-                                    <div style="font-size: 12px; color: #2c3e50; text-align: left;">
-                                        <div style="margin-bottom: 4px;">📚 <b>Curso:</b> $${saldoCurso.toFixed(2)} <span style="color:#7f8c8d; font-size:10px;">(De $${Number(p.valorCurso).toFixed(2)})</span></div>
-                                        ${htmlAlojamiento}
-                                        <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #bdc3c7; color: #27ae60; font-weight: bold;">
-                                            💰 Total Pagado: $${(Number(p.totalPagado) || 0).toFixed(2)}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <button class="${btnClass}" onclick="cambiarEstadoParticipante('${p.id}', '${p.nombre}', '${p.estado}')" style="margin-right: 5px; padding: 5px 10px; font-size: 11px;">
-                                        🔄 ${btnTexto}
-                                    </button>
-                                    <button class="btn-danger" onclick="eliminarParticipante('${p.id}', '${p.nombre}')" style="padding: 5px 10px; font-size: 11px;">
-                                        🗑️ Eliminar
-                                    </button>
-                                </td>
-                            </tr>`;
-                        
-                        // ✅ CORRECCIÓN 2: Usar los campos correctos en el HTML
+                    // ✅ CORRECCIÓN 2: Usar los campos correctos en el HTML
                         tbody.innerHTML += `
                             <tr>
                                 <td>${p.cedula}</td>
@@ -3418,17 +3350,7 @@
                                 <small style="color: #6c757d; font-size: 0.8em;">Selecciona a qué concepto se aplica este abono.</small>
                             </div>
 
-                            <!-- ✅ NUEVO: Selector de Tipo de Pago -->
-                            <div class="form-group">
-                                <label style="font-weight: 600;">Tipo de Pago *</label>
-                                <select id="pagoTipo" class="form-control" required style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
-                                    <option value="Curso">Curso</option>
-                                    <option value="Alojamiento">Alojamiento</option>
-                                </select>
-                                <small style="color: #6c757d; font-size: 0.8em;">Selecciona a qué concepto se aplica este abono.</small>
-                            </div>
-
-                            <div class="form-group">
+                                <div class="form-group">
                                 <label>Número de Abono *</label>
                                 <select id="pagoAbonoNum" required>
                                     <option value="1">Abono 1</option>
